@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="A beautiful virtual bookshelf to manage your eBooks, audiobooks, physical books and wishlists — all offline.">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Book Library — Virtual Bookshelf</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/bookshelf.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+
+<body>
+    <!-- ===== Top Navigation ===== -->
+    <header id="app-header">
+        <div class="header-inner">
+            <div class="logo">
+                <span class="logo-icon"><svg viewBox="0 0 24 24">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                        <line x1="12" y1="6" x2="12" y2="13" />
+                        <line x1="9" y1="10" x2="15" y2="10" />
+                    </svg></span>
+                <h1>Book Library</h1>
+            </div>
+            <nav id="tab-bar" role="tablist">
+                <button class="tab-btn active" role="tab" data-tab="unified" aria-selected="true" id="tab-unified">
+                    <span class="tab-icon"><svg viewBox="0 0 24 24">
+                            <rect x="3" y="3" width="7" height="7" rx="1" />
+                            <rect x="14" y="3" width="7" height="7" rx="1" />
+                            <rect x="3" y="14" width="7" height="7" rx="1" />
+                            <rect x="14" y="14" width="7" height="7" rx="1" />
+                        </svg></span><span class="tab-label">Library</span>
+                </button>
+                <button class="tab-btn" role="tab" data-tab="ebooks" id="tab-ebooks">
+                    <span class="tab-icon"><svg viewBox="0 0 24 24">
+                            <rect x="5" y="2" width="14" height="20" rx="2" />
+                            <line x1="9" y1="7" x2="15" y2="7" />
+                            <line x1="9" y1="10" x2="15" y2="10" />
+                            <line x1="9" y1="13" x2="12" y2="13" />
+                        </svg></span><span class="tab-label">eBooks</span>
+                </button>
+                <button class="tab-btn" role="tab" data-tab="audiobooks" id="tab-audiobooks">
+                    <span class="tab-icon"><svg viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="9" />
+                            <path d="M8 12a4 4 0 0 1 8 0" />
+                            <circle cx="12" cy="12" r="1.5" />
+                            <path d="M12 2v3" />
+                            <path d="M12 19v3" />
+                        </svg></span><span class="tab-label">Audiobooks</span>
+                </button>
+                <button class="tab-btn" role="tab" data-tab="physical" id="tab-physical">
+                    <span class="tab-icon"><svg viewBox="0 0 24 24">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                        </svg></span><span class="tab-label">Physical</span>
+                </button>
+                <button class="tab-btn" role="tab" data-tab="wishlist" id="tab-wishlist">
+                    <span class="tab-icon"><svg viewBox="0 0 24 24">
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                        </svg></span><span class="tab-label">Wishlist</span>
+                </button>
+                <button class="tab-btn" role="tab" data-tab="settings" id="tab-settings">
+                    <span class="tab-icon"><svg viewBox="0 0 24 24">
+                            <line x1="4" y1="7" x2="20" y2="7" />
+                            <line x1="4" y1="12" x2="20" y2="12" />
+                            <line x1="4" y1="17" x2="20" y2="17" />
+                            <circle cx="8" cy="7" r="2" fill="currentColor" stroke="none" />
+                            <circle cx="16" cy="12" r="2" fill="currentColor" stroke="none" />
+                            <circle cx="10" cy="17" r="2" fill="currentColor" stroke="none" />
+                        </svg></span><span class="tab-label">Settings</span>
+                </button>
+                <div class="tab-indicator" id="tab-indicator"></div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- ===== Main Content Sections ===== -->
+    <main id="app-main">
+
+        <!-- Unified Library -->
+        <section id="section-unified" class="tab-section active" role="tabpanel">
+            <div class="section-header">
+                <h2>My Library</h2>
+                <div class="section-controls">
+                    <div class="search-box">
+                        <span class="search-icon"><svg viewBox="0 0 24 24">
+                                <circle cx="11" cy="11" r="7" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg></span>
+                        <input type="search" id="unified-search" placeholder="Search your library…" autocomplete="off">
+                    </div>
+                    <div class="filter-group">
+                        <select id="unified-sort">
+                            <option value="title">Sort by Title</option>
+                            <option value="author">Sort by Author</option>
+                            <option value="dateAdded">Sort by Date Added</option>
+                            <option value="rating">Sort by Rating</option>
+                        </select>
+                        <select id="unified-filter-format">
+                            <option value="all">All Formats</option>
+                            <option value="ebook">eBooks Only</option>
+                            <option value="audiobook">Audiobooks Only</option>
+                            <option value="physical">Physical Only</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="bookshelf-container" id="unified-shelf">
+                <div class="empty-state" id="unified-empty">
+                    <div class="empty-icon"><span class="icon" style="width:56px;height:56px"><svg viewBox="0 0 24 24">
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                            </svg></span></div>
+                    <h3>Your library is empty</h3>
+                    <p>Scan your eBook or audiobook folders, or add physical books to get started.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- eBooks -->
+        <section id="section-ebooks" class="tab-section" role="tabpanel">
+            <div class="section-header">
+                <h2>eBook Collection</h2>
+                <div class="section-controls">
+                    <button class="btn btn-primary" id="btn-scan-ebooks">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                        </svg>
+                        Scan Calibre Library
+                    </button>
+                    <div class="search-box">
+                        <span class="search-icon"><svg viewBox="0 0 24 24">
+                                <circle cx="11" cy="11" r="7" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg></span>
+                        <input type="search" id="ebooks-search" placeholder="Search eBooks…" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+            <input type="file" id="ebook-folder-input" webkitdirectory directory multiple hidden>
+            <div class="scan-progress" id="ebook-scan-progress" hidden>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="ebook-progress-fill"></div>
+                </div>
+                <p class="progress-text" id="ebook-progress-text">Scanning…</p>
+            </div>
+            <div class="bookshelf-container" id="ebooks-shelf">
+                <div class="empty-state" id="ebooks-empty">
+                    <div class="empty-icon"><span class="icon" style="width:56px;height:56px"><svg viewBox="0 0 24 24">
+                                <rect x="5" y="2" width="14" height="20" rx="2" />
+                                <line x1="9" y1="7" x2="15" y2="7" />
+                                <line x1="9" y1="10" x2="15" y2="10" />
+                                <line x1="9" y1="13" x2="12" y2="13" />
+                            </svg></span></div>
+                    <h3>No eBooks yet</h3>
+                    <p>Click "Scan Calibre Library" to import your collection.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Audiobooks -->
+        <section id="section-audiobooks" class="tab-section" role="tabpanel">
+            <div class="section-header">
+                <h2>Audiobook Collection</h2>
+                <div class="section-controls">
+                    <button class="btn btn-primary" id="btn-scan-audiobooks">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+                        </svg>
+                        Scan Audiobook Folder
+                    </button>
+                    <div class="search-box">
+                        <span class="search-icon"><svg viewBox="0 0 24 24">
+                                <circle cx="11" cy="11" r="7" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg></span>
+                        <input type="search" id="audiobooks-search" placeholder="Search audiobooks…" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+            <input type="file" id="audiobook-folder-input" webkitdirectory directory multiple hidden>
+            <div class="scan-progress" id="audiobook-scan-progress" hidden>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="audiobook-progress-fill"></div>
+                </div>
+                <p class="progress-text" id="audiobook-progress-text">Scanning…</p>
+            </div>
+            <div class="bookshelf-container" id="audiobooks-shelf">
+                <div class="empty-state" id="audiobooks-empty">
+                    <div class="empty-icon"><span class="icon" style="width:56px;height:56px"><svg viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="9" />
+                                <path d="M8 12a4 4 0 0 1 8 0" />
+                                <circle cx="12" cy="12" r="1.5" />
+                            </svg></span></div>
+                    <h3>No audiobooks yet</h3>
+                    <p>Click "Scan Audiobook Folder" to import your collection.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Physical Books -->
+        <section id="section-physical" class="tab-section" role="tabpanel">
+            <div class="section-header">
+                <h2>Physical Collection</h2>
+                <div class="section-controls">
+                    <button class="btn btn-primary" id="btn-add-physical">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        Add Book
+                    </button>
+                    <div class="search-box">
+                        <span class="search-icon"><svg viewBox="0 0 24 24">
+                                <circle cx="11" cy="11" r="7" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg></span>
+                        <input type="search" id="physical-search" placeholder="Search physical books…"
+                            autocomplete="off">
+                    </div>
+                </div>
+            </div>
+            <div class="bookshelf-container" id="physical-shelf">
+                <div class="empty-state" id="physical-empty">
+                    <div class="empty-icon"><span class="icon" style="width:56px;height:56px"><svg viewBox="0 0 24 24">
+                                <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                                <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                            </svg></span></div>
+                    <h3>No physical books yet</h3>
+                    <p>Click "Add Book" to start cataloguing your collection.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Wishlist -->
+        <section id="section-wishlist" class="tab-section" role="tabpanel">
+            <div class="section-header">
+                <h2>Wishlist</h2>
+                <div class="section-controls">
+                    <button class="btn btn-primary" id="btn-add-wishlist">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19" />
+                            <line x1="5" y1="12" x2="19" y2="12" />
+                        </svg>
+                        Add Item
+                    </button>
+                    <button class="btn btn-secondary" id="btn-import-wishlist">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Import Wishlist
+                    </button>
+                    <button class="btn btn-secondary" id="btn-wishlist-help">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+                            <circle cx="12" cy="17" r="0.5" fill="currentColor" />
+                        </svg>
+                        How to Export
+                    </button>
+                    <div class="search-box">
+                        <span class="search-icon"><svg viewBox="0 0 24 24">
+                                <circle cx="11" cy="11" r="7" />
+                                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                            </svg></span>
+                        <input type="search" id="wishlist-search" placeholder="Search wishlist…" autocomplete="off">
+                    </div>
+                </div>
+            </div>
+            <input type="file" id="wishlist-file-input" accept=".json,.csv" hidden>
+            <div class="wishlist-container" id="wishlist-grid">
+                <div class="empty-state" id="wishlist-empty">
+                    <div class="empty-icon"><span class="icon" style="width:56px;height:56px"><svg viewBox="0 0 24 24">
+                                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                            </svg></span></div>
+                    <h3>Wishlist is empty</h3>
+                    <p>Add books you'd like to buy, or import your Amazon wishlist.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Settings -->
+        <section id="section-settings" class="tab-section" role="tabpanel">
+            <div class="section-header">
+                <h2>Settings</h2>
+            </div>
+            <div class="settings-container">
+                <div class="settings-card">
+                    <h3>Data Management</h3>
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" id="btn-export-json">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="17 8 12 3 7 8" />
+                                <line x1="12" y1="3" x2="12" y2="15" />
+                            </svg>
+                            Export Library (JSON)
+                        </button>
+                        <button class="btn btn-secondary" id="btn-import-json">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="7 10 12 15 17 10" />
+                                <line x1="12" y1="15" x2="12" y2="3" />
+                            </svg>
+                            Import Library (JSON)
+                        </button>
+                        <input type="file" id="import-json-input" accept=".json" hidden>
+                    </div>
+                    <p class="settings-note">Export your entire library including cover art to a JSON file for backup or
+                        transfer.</p>
+                </div>
+                <div class="settings-card">
+                    <h3>Clear Data</h3>
+                    <div class="settings-actions">
+                        <button class="btn btn-danger" id="btn-clear-ebooks">Clear eBooks</button>
+                        <button class="btn btn-danger" id="btn-clear-audiobooks">Clear Audiobooks</button>
+                        <button class="btn btn-danger" id="btn-clear-physical">Clear Physical</button>
+                        <button class="btn btn-danger" id="btn-clear-wishlist">Clear Wishlist</button>
+                        <button class="btn btn-danger" id="btn-clear-all">Clear Everything</button>
+                    </div>
+                    <p class="settings-note">⚠ Clearing data is permanent. Export your library first!</p>
+                </div>
+                <div class="settings-card">
+                    <h3>About</h3>
+                    <div class="stats" id="library-stats">
+                        <div class="stat-item"><span class="stat-value" id="stat-ebooks">0</span><span
+                                class="stat-label">eBooks</span></div>
+                        <div class="stat-item"><span class="stat-value" id="stat-audiobooks">0</span><span
+                                class="stat-label">Audiobooks</span></div>
+                        <div class="stat-item"><span class="stat-value" id="stat-physical">0</span><span
+                                class="stat-label">Physical</span></div>
+                        <div class="stat-item"><span class="stat-value" id="stat-wishlist">0</span><span
+                                class="stat-label">Wishlist</span></div>
+                    </div>
+                    <p class="settings-note">Book Library v2.0 — Works fully offline. Data stored in your browser's
+                        IndexedDB.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- ===== Modals ===== -->
+
+    <!-- Book Detail Modal -->
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="book-detail-modal">
+            <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+            <div class="modal-body">
+                <div class="modal-cover">
+                    <img id="modal-cover-img" src="" alt="Book cover">
+                </div>
+                <div class="modal-info">
+                    <h2 id="modal-title"></h2>
+                    <p class="modal-author" id="modal-author"></p>
+                    <div class="modal-formats" id="modal-formats"></div>
+                    <div class="modal-meta" id="modal-meta"></div>
+                    <p class="modal-description" id="modal-description"></p>
+                    <div class="modal-tags" id="modal-tags"></div>
+                    <div class="modal-actions" id="modal-actions"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Book Modal -->
+    <div class="modal-overlay" id="form-modal-overlay">
+        <div class="modal modal-form" id="book-form-modal">
+            <button class="modal-close" id="form-modal-close" aria-label="Close">✕</button>
+            <h2 id="form-modal-title">Add Book</h2>
+            <form id="book-form" autocomplete="off">
+                <input type="hidden" id="form-book-id">
+                <input type="hidden" id="form-book-type" value="physical">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="form-title">Title *</label>
+                        <input type="text" id="form-title" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="form-author">Author *</label>
+                        <input type="text" id="form-author" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="form-isbn">ISBN</label>
+                        <input type="text" id="form-isbn" placeholder="ISBN-10 or ISBN-13">
+                        <div class="form-btn-row">
+                            <button type="button" class="btn btn-primary btn-small" id="btn-lookup-book">🔍 Look
+                                Up</button>
+                            <button type="button" class="btn btn-small" id="btn-fetch-cover">Fetch Cover</button>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="form-genre">Genre / Tags</label>
+                        <input type="text" id="form-genre" placeholder="fiction, sci-fi, …">
+                    </div>
+                </div>
+                <div id="lookup-results" class="lookup-results" hidden></div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="form-rating">Rating</label>
+                        <div class="star-rating" id="form-star-rating">
+                            <span class="star" data-val="1">★</span>
+                            <span class="star" data-val="2">★</span>
+                            <span class="star" data-val="3">★</span>
+                            <span class="star" data-val="4">★</span>
+                            <span class="star" data-val="5">★</span>
+                        </div>
+                        <input type="hidden" id="form-rating" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="form-cover-upload">Cover Image</label>
+                        <input type="file" id="form-cover-upload" accept="image/*">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="form-notes">Notes</label>
+                    <textarea id="form-notes" rows="3"></textarea>
+                </div>
+                <!-- Wishlist-specific fields -->
+                <div class="form-wishlist-fields" id="form-wishlist-fields" hidden>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="form-amazon-url">Amazon URL</label>
+                            <input type="url" id="form-amazon-url" placeholder="https://amazon.co.uk/…">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="form-amazon-price">Amazon Price (£)</label>
+                            <input type="number" id="form-amazon-price" step="0.01" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="form-oxfam-price">Oxfam Price (£)</label>
+                            <input type="number" id="form-oxfam-price" step="0.01" min="0">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="btn-form-cancel">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="btn-form-save">Save Book</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal-overlay" id="help-modal-overlay">
+        <div class="modal" style="max-width: 640px;">
+            <button class="modal-close" id="help-modal-close" aria-label="Close">✕</button>
+            <div class="help-modal-content">
+                <h2>How to Import Your Amazon Wishlist</h2>
+                <p style="color: var(--text-secondary); margin-bottom: var(--space-lg); font-size: var(--text-sm);">
+                    A script is included with this app that you paste into your browser's Developer Console while
+                    viewing your Amazon wishlist. It extracts all items and downloads a JSON file you can import here.
+                </p>
+
+                <h3>Step 1: Open Your Amazon Wishlist</h3>
+                <ol>
+                    <li>Go to <code>amazon.co.uk/hz/wishlist/ls/</code> (or your regional Amazon)</li>
+                    <li><strong>Scroll all the way down</strong> so every item loads (Amazon uses infinite scroll)</li>
+                </ol>
+
+                <h3>Step 2: Open the Developer Console</h3>
+                <ol>
+                    <li><strong>Chrome / Edge:</strong> Press <span class="kbd">Cmd</span> + <span
+                            class="kbd">Option</span> + <span class="kbd">J</span> (Mac) or <span
+                            class="kbd">Ctrl</span> + <span class="kbd">Shift</span> + <span class="kbd">J</span>
+                        (Windows)</li>
+                    <li><strong>Firefox:</strong> Press <span class="kbd">Cmd</span> + <span class="kbd">Option</span> +
+                        <span class="kbd">K</span> (Mac) or <span class="kbd">Ctrl</span> + <span
+                            class="kbd">Shift</span> + <span class="kbd">K</span> (Windows)
+                    </li>
+                    <li><strong>Safari:</strong> First enable Developer menu: <em>Safari → Settings → Advanced → Show
+                            features for web developers</em>. Then press <span class="kbd">Cmd</span> + <span
+                            class="kbd">Option</span> + <span class="kbd">C</span></li>
+                </ol>
+
+                <h3>Step 3: Paste &amp; Run the Script</h3>
+                <ol>
+                    <li>Open the file <code>tools/amazon-wishlist-exporter.js</code> from the Book Library folder</li>
+                    <li>Copy the entire contents</li>
+                    <li>Paste into the console and press <span class="kbd">Enter</span></li>
+                    <li>A JSON file will download automatically</li>
+                </ol>
+
+                <h3>Step 4: Import into Book Library</h3>
+                <ol>
+                    <li>Come back to this app's <strong>Wishlist</strong> tab</li>
+                    <li>Click <strong>Import Wishlist</strong> and select the downloaded JSON file</li>
+                    <li>Your items will be imported with titles, authors, prices, and links</li>
+                </ol>
+
+                <div class="help-note">
+                    <strong>Tip:</strong> If Safari blocks the paste, it may ask you to type
+                    <code>allow pasting</code> first. This is a security feature — just type it and press Enter, then
+                    paste the script.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script src="js/utils.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/scanner-ebook.js"></script>
+    <script src="js/scanner-audiobook.js"></script>
+    <script src="js/books-physical.js"></script>
+    <script src="js/wishlist.js"></script>
+    <script src="js/library-view.js"></script>
+    <script src="js/import-export.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+
+</html>

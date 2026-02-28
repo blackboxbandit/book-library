@@ -1,0 +1,9 @@
+{
+    "name": "oxfam-scraper",
+    "version": "1.0.0",
+    "description": "Puppeteer-based scraper for Oxfam Online Shop book prices",
+    "private": true,
+    "dependencies": {
+        "puppeteer": "^24.0.0"
+    }
+}
