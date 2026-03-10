@@ -113,8 +113,31 @@
                             <option value="audiobook">Audiobooks Only</option>
                             <option value="physical">Physical Only</option>
                         </select>
+                        <select id="unified-filter-status">
+                            <option value="all">All Status</option>
+                            <option value="unread">Unread</option>
+                            <option value="reading">Currently Reading</option>
+                            <option value="read">Read</option>
+                        </select>
+                        <select id="unified-group-by">
+                            <option value="none">No Grouping</option>
+                            <option value="shelf">Group by Shelf</option>
+                            <option value="genre">Group by Genre</option>
+                            <option value="author">Group by Author</option>
+                            <option value="status">Group by Status</option>
+                        </select>
+                        <select id="unified-filter-shelf">
+                            <option value="all">All Shelves</option>
+                        </select>
                     </div>
                 </div>
+            </div>
+            <!-- Currently Reading Section -->
+            <div id="currently-reading-section" class="currently-reading-section" hidden>
+                <div class="currently-reading-header">
+                    <h3>📖 Currently Reading</h3>
+                </div>
+                <div class="bookshelf-container currently-reading-shelf" id="currently-reading-shelf"></div>
             </div>
             <div class="bookshelf-container" id="unified-shelf">
                 <div class="empty-state" id="unified-empty">
@@ -342,6 +365,19 @@
                     <p class="settings-note">⚠ Clearing data is permanent. Export your library first!</p>
                 </div>
                 <div class="settings-card">
+                    <h3>Manage Shelves</h3>
+                    <div class="shelf-manager" id="shelf-manager">
+                        <div class="shelf-create-row">
+                            <input type="text" id="shelf-name-input" placeholder="New shelf name…" maxlength="40">
+                            <button class="btn btn-primary btn-small" id="btn-create-shelf">Create</button>
+                        </div>
+                        <div class="shelf-list" id="shelf-list">
+                            <p class="settings-note">No shelves yet. Create one above!</p>
+                        </div>
+                    </div>
+                    <p class="settings-note">Organise your books into custom shelves for easy browsing.</p>
+                </div>
+                <div class="settings-card">
                     <h3>About</h3>
                     <div class="stats" id="library-stats">
                         <div class="stat-item"><span class="stat-value" id="stat-ebooks">0</span><span
@@ -352,8 +388,12 @@
                                 class="stat-label">Physical</span></div>
                         <div class="stat-item"><span class="stat-value" id="stat-wishlist">0</span><span
                                 class="stat-label">Wishlist</span></div>
+                        <div class="stat-item"><span class="stat-value" id="stat-reading">0</span><span
+                                class="stat-label">Reading</span></div>
+                        <div class="stat-item"><span class="stat-value" id="stat-read">0</span><span
+                                class="stat-label">Read</span></div>
                     </div>
-                    <p class="settings-note">Book Library v2.0 — Works fully offline. Data stored in your browser's
+                    <p class="settings-note">Book Library v2.1 — Works fully offline. Data stored in your browser's
                         IndexedDB.</p>
                 </div>
             </div>
@@ -432,6 +472,22 @@
                     <div class="form-group">
                         <label for="form-cover-upload">Cover Image</label>
                         <input type="file" id="form-cover-upload" accept="image/*">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="form-reading-status">Reading Status</label>
+                        <select id="form-reading-status">
+                            <option value="unread">Unread</option>
+                            <option value="reading">Currently Reading</option>
+                            <option value="read">Read</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="form-shelf">Shelf</label>
+                        <select id="form-shelf">
+                            <option value="">No Shelf</option>
+                        </select>
                     </div>
                 </div>
                 <div class="form-group">

@@ -4,7 +4,7 @@ const App = (() => {
 
     function init() {
         // Init DB first
-        DB.open().then(() => {
+        DB.open().then(async () => {
             // Init all modules
             EbookScanner.init();
             AudiobookScanner.init();
@@ -33,12 +33,18 @@ const App = (() => {
             // Search handlers
             initSearch();
 
-            // Load initial view
-            refreshCurrentTab();
-            updateStats();
+            // Shelf management
+            initShelfManager();
 
             // Register service worker
             registerSW();
+
+            // Populate dropdowns that depend on DB data
+            await populateShelfDropdowns();
+
+            // Load initial view
+            refreshCurrentTab();
+            updateStats();
         }).catch(err => {
             console.error('Failed to init DB:', err);
             Utils.toast('Database error: ' + err.message, 'error');
@@ -91,7 +97,10 @@ const App = (() => {
                 const search = document.getElementById('unified-search').value;
                 const sort = document.getElementById('unified-sort').value;
                 const filter = document.getElementById('unified-filter-format').value;
-                await LibraryView.renderUnified(ebooks, audiobooks, physical, search, sort, filter);
+                const statusFilter = document.getElementById('unified-filter-status').value;
+                const groupBy = document.getElementById('unified-group-by').value;
+                const shelfFilter = document.getElementById('unified-filter-shelf').value;
+                await LibraryView.renderUnified(ebooks, audiobooks, physical, search, sort, filter, statusFilter, groupBy, shelfFilter);
                 break;
             case 'ebooks':
                 await LibraryView.renderCollection('ebooks', 'ebooks-shelf', allBooks, document.getElementById('ebooks-search').value);
@@ -118,10 +127,28 @@ const App = (() => {
     }
 
     async function updateStats() {
-        document.getElementById('stat-ebooks').textContent = await DB.count(DB.STORES.EBOOKS);
-        document.getElementById('stat-audiobooks').textContent = await DB.count(DB.STORES.AUDIOBOOKS);
-        document.getElementById('stat-physical').textContent = await DB.count(DB.STORES.PHYSICAL);
-        document.getElementById('stat-wishlist').textContent = await DB.count(DB.STORES.WISHLIST);
+        const ebooks = await DB.count(DB.STORES.EBOOKS);
+        const audiobooks = await DB.count(DB.STORES.AUDIOBOOKS);
+        const physical = await DB.count(DB.STORES.PHYSICAL);
+        const wishlist = await DB.count(DB.STORES.WISHLIST);
+
+        document.getElementById('stat-ebooks').textContent = ebooks;
+        document.getElementById('stat-audiobooks').textContent = audiobooks;
+        document.getElementById('stat-physical').textContent = physical;
+        document.getElementById('stat-wishlist').textContent = wishlist;
+
+        // Reading stats
+        const allBooks = [
+            ...await DB.getAll(DB.STORES.EBOOKS),
+            ...await DB.getAll(DB.STORES.AUDIOBOOKS),
+            ...await DB.getAll(DB.STORES.PHYSICAL)
+        ];
+        const readingCount = allBooks.filter(b => b.readingStatus === 'reading').length;
+        const readCount = allBooks.filter(b => b.readingStatus === 'read').length;
+        const readingEl = document.getElementById('stat-reading');
+        const readEl = document.getElementById('stat-read');
+        if (readingEl) readingEl.textContent = readingCount;
+        if (readEl) readEl.textContent = readCount;
     }
 
     function initModals() {
@@ -285,9 +312,115 @@ const App = (() => {
             if (el) el.addEventListener('input', debouncedRefresh);
         });
 
-        ['unified-sort', 'unified-filter-format'].forEach(id => {
+        ['unified-sort', 'unified-filter-format', 'unified-filter-status', 'unified-group-by', 'unified-filter-shelf'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.addEventListener('change', () => refreshCurrentTab());
+        });
+    }
+
+    /**
+     * Populate all shelf dropdown selectors
+     */
+    async function populateShelfDropdowns() {
+        const shelves = await DB.getAll(DB.STORES.SHELVES);
+        // Unified filter
+        const filterEl = document.getElementById('unified-filter-shelf');
+        if (filterEl) {
+            const currentVal = filterEl.value;
+            filterEl.innerHTML = '<option value="all">All Shelves</option>' +
+                shelves.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+            filterEl.value = currentVal;
+        }
+        // Form shelf selector
+        const formEl = document.getElementById('form-shelf');
+        if (formEl) {
+            const currentVal = formEl.value;
+            formEl.innerHTML = '<option value="">No Shelf</option>' +
+                shelves.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+            formEl.value = currentVal;
+        }
+    }
+
+    /**
+     * Shelf management UI
+     */
+    function initShelfManager() {
+        const createBtn = document.getElementById('btn-create-shelf');
+        const nameInput = document.getElementById('shelf-name-input');
+        if (!createBtn || !nameInput) return;
+
+        createBtn.addEventListener('click', async () => {
+            const name = nameInput.value.trim();
+            if (!name) {
+                Utils.toast('Enter a shelf name.', 'error');
+                return;
+            }
+            // Check for duplicate
+            const existing = await DB.getAll(DB.STORES.SHELVES);
+            if (existing.some(s => s.name.toLowerCase() === name.toLowerCase())) {
+                Utils.toast('A shelf with that name already exists.', 'error');
+                return;
+            }
+            const shelf = {
+                id: Utils.generateId(),
+                name,
+                dateCreated: new Date().toISOString()
+            };
+            await DB.put(DB.STORES.SHELVES, shelf);
+            nameInput.value = '';
+            Utils.toast(`Shelf "${name}" created!`, 'success');
+            await populateShelfDropdowns();
+            await renderShelfList();
+        });
+
+        nameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                createBtn.click();
+            }
+        });
+
+        renderShelfList();
+    }
+
+    async function renderShelfList() {
+        const container = document.getElementById('shelf-list');
+        if (!container) return;
+        const shelves = await DB.getAll(DB.STORES.SHELVES);
+        if (!shelves.length) {
+            container.innerHTML = '<p class="settings-note">No shelves yet. Create one above!</p>';
+            return;
+        }
+        container.innerHTML = shelves.map(s => `
+            <div class="shelf-list-item" data-id="${s.id}">
+                <span class="shelf-list-name">${s.name}</span>
+                <button class="btn btn-small btn-danger btn-delete-shelf" data-id="${s.id}" data-name="${s.name}">Delete</button>
+            </div>
+        `).join('');
+
+        container.querySelectorAll('.btn-delete-shelf').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const id = btn.dataset.id;
+                const name = btn.dataset.name;
+                if (!confirm(`Delete shelf "${name}"? Books on this shelf will be unassigned.`)) return;
+
+                // Unassign books from this shelf
+                for (const store of [DB.STORES.EBOOKS, DB.STORES.AUDIOBOOKS, DB.STORES.PHYSICAL]) {
+                    const books = await DB.getAll(store);
+                    for (const book of books) {
+                        if (book.shelf === name) {
+                            book.shelf = '';
+                            await DB.put(store, book);
+                        }
+                    }
+                }
+
+                await DB.remove(DB.STORES.SHELVES, id);
+                Utils.toast(`Shelf "${name}" deleted.`, 'info');
+                await populateShelfDropdowns();
+                await renderShelfList();
+                refreshCurrentTab();
+            });
         });
     }
 

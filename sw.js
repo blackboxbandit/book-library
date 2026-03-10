@@ -1,5 +1,5 @@
 /* ===== Service Worker — Offline Cache ===== */
-const CACHE_NAME = 'book-library-v4';
+const CACHE_NAME = 'book-library-v5';
 const ASSETS = [
     './',
     './index.html',

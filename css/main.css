@@ -419,8 +419,103 @@ select {
 
 .modal-actions {
     display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+/* Modal Status & Shelf Groups */
+.modal-status-group,
+.modal-shelf-group,
+.modal-edit-group {
+    display: flex;
+    align-items: center;
     gap: var(--space-sm);
     flex-wrap: wrap;
+}
+
+.modal-status-label {
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+    font-weight: var(--weight-medium);
+    min-width: 48px;
+}
+
+.btn-status-toggle {
+    transition: all var(--duration-fast) var(--ease-out);
+}
+
+.btn-status-toggle:disabled {
+    opacity: 0.8;
+    cursor: default;
+}
+
+.modal-shelf-select {
+    appearance: none;
+    -webkit-appearance: none;
+    background: var(--bg-tertiary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236e6e73' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 10px center;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    padding: 6px 32px 6px 12px;
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: border-color var(--duration-fast) var(--ease-out);
+    font-family: var(--font-body);
+}
+
+.modal-shelf-select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+/* ===== Shelf Manager (Settings) ===== */
+.shelf-manager {
+    margin-bottom: var(--space-md);
+}
+
+.shelf-create-row {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.shelf-create-row input {
+    flex: 1;
+    background: var(--bg-tertiary);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    color: var(--text-primary);
+    font-size: var(--text-sm);
+    font-family: var(--font-body);
+    outline: none;
+    transition: border-color var(--duration-fast) var(--ease-out);
+}
+
+.shelf-create-row input:focus {
+    border-color: var(--accent);
+}
+
+.shelf-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.shelf-list-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--glass-border);
+}
+
+.shelf-list-name {
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    font-weight: var(--weight-medium);
 }
 
 /* Form Modal */

@@ -6,6 +6,13 @@ const LibraryView = (() => {
         audiobook: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12a4 4 0 0 1 8 0"/><circle cx="12" cy="12" r="1.5"/></svg>',
         physical: '<svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>',
         book: '<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>',
+        check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+    };
+
+    const STATUS_LABELS = {
+        unread: 'Unread',
+        reading: 'Reading',
+        read: 'Read'
     };
 
     function badgeHTML(type, label) {
@@ -127,6 +134,30 @@ const LibraryView = (() => {
             }
 
             if (badges.innerHTML) card.appendChild(badges);
+        }
+
+        // Reading status indicator
+        const status = book.readingStatus || 'unread';
+        if (status !== 'unread') {
+            const statusBadge = document.createElement('div');
+            statusBadge.className = `reading-status-badge status-${status}`;
+            statusBadge.textContent = status === 'reading' ? '📖' : '✅';
+            statusBadge.title = STATUS_LABELS[status];
+            card.appendChild(statusBadge);
+        }
+
+        // Tick-to-complete button (for currently reading cards)
+        if (options.showTickButton && status === 'reading') {
+            const tickBtn = document.createElement('button');
+            tickBtn.className = 'tick-complete-btn';
+            tickBtn.innerHTML = ICONS.check;
+            tickBtn.title = 'Mark as Read';
+            tickBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                await updateBookStatus(book, 'read');
+                App.refreshCurrentTab();
+            });
+            card.appendChild(tickBtn);
         }
 
         // Sale badge for wishlist
@@ -269,12 +300,99 @@ const LibraryView = (() => {
                 if (!entry.series && book.series) entry.series = book.series;
                 if (!entry.publisher && book.publisher) entry.publisher = book.publisher;
                 if (book.rating && (!entry.rating || book.rating > entry.rating)) entry.rating = book.rating;
+                // Merge reading status (prefer 'reading' > 'read' > 'unread')
+                const statusPriority = { reading: 3, read: 2, unread: 1 };
+                const bookStatus = book.readingStatus || 'unread';
+                const entryStatus = entry.readingStatus || 'unread';
+                if ((statusPriority[bookStatus] || 0) > (statusPriority[entryStatus] || 0)) {
+                    entry.readingStatus = bookStatus;
+                }
+                if (!entry.shelf && book.shelf) entry.shelf = book.shelf;
+                if (!entry.dateStarted && book.dateStarted) entry.dateStarted = book.dateStarted;
+                if (!entry.dateCompleted && book.dateCompleted) entry.dateCompleted = book.dateCompleted;
             }
         };
 
         addBooks(ebooks, 'ebook');
         addBooks(audiobooks, 'audiobook');
         addBooks(physical, 'physical');
+
+        // --- Fuzzy matching second pass ---
+        // Catch entries that didn't merge by exact matchKey but whose titles
+        // overlap (e.g. audiobook title contains ebook title or vice versa).
+        const entries = Array.from(merged.entries()); // [key, entry]
+        const normCache = new Map(); // key → normalised title string
+
+        const normTitle = (entry) => {
+            if (normCache.has(entry)) return normCache.get(entry);
+            const t = (entry.title || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                .toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, ' ');
+            normCache.set(entry, t);
+            return t;
+        };
+
+        for (let i = 0; i < entries.length; i++) {
+            const [keyA, entryA] = entries[i];
+            if (!merged.has(keyA)) continue; // already merged away
+
+            const normA = normTitle(entryA);
+            if (normA.length < 4) continue; // too short for reliable matching
+
+            for (let j = i + 1; j < entries.length; j++) {
+                const [keyB, entryB] = entries[j];
+                if (!merged.has(keyB)) continue; // already merged away
+
+                const normB = normTitle(entryB);
+                if (normB.length < 4) continue;
+
+                // Check if one title contains the other
+                const aContainsB = normA.includes(normB);
+                const bContainsA = normB.includes(normA);
+                if (!aContainsB && !bContainsA) continue;
+
+                // Also check author overlap — at least one author word must match
+                const authorWordsA = (entryA.author || '').toLowerCase().split(/\s+/).filter(w => w.length > 2);
+                const authorWordsB = (entryB.author || '').toLowerCase().split(/\s+/).filter(w => w.length > 2);
+                const authorOverlap = authorWordsA.some(w => authorWordsB.includes(w));
+                if (!authorOverlap && authorWordsA.length > 0 && authorWordsB.length > 0) continue;
+
+                // Merge B into A (keep the one with the shorter/cleaner title as primary)
+                const [primary, secondary, secondaryKey] = normA.length <= normB.length
+                    ? [entryA, entryB, keyB]
+                    : [entryB, entryA, keyA];
+
+                // Copy format flags
+                if (secondary.hasEbook) primary.hasEbook = true;
+                if (secondary.hasAudiobook) primary.hasAudiobook = true;
+                if (secondary.hasPhysical) primary.hasPhysical = true;
+                // Copy cover if missing
+                if (!primary.coverId && secondary.coverId) primary.coverId = secondary.coverId;
+                // Merge tags
+                if (secondary.tags && secondary.tags.length) {
+                    primary.tags = [...new Set([...(primary.tags || []), ...secondary.tags])];
+                }
+                // Merge formats
+                if (secondary._allFormats && secondary._allFormats.length) {
+                    primary._allFormats = [...new Set([...(primary._allFormats || []), ...secondary._allFormats])];
+                }
+                if (secondary.formats && secondary.formats.length) {
+                    primary._allFormats = [...new Set([...(primary._allFormats || []), ...secondary.formats])];
+                }
+                // Keep richer metadata
+                if (!primary.description && secondary.description) primary.description = secondary.description;
+                if (!primary.isbn && secondary.isbn) primary.isbn = secondary.isbn;
+                if (!primary.series && secondary.series) primary.series = secondary.series;
+                if (!primary.publisher && secondary.publisher) primary.publisher = secondary.publisher;
+                if (secondary.rating && (!primary.rating || secondary.rating > primary.rating)) primary.rating = secondary.rating;
+
+                // Remove the secondary entry
+                merged.delete(secondaryKey);
+
+                // If we merged B into A (secondaryKey === keyB), entryA is already updated.
+                // If we merged A into B (secondaryKey === keyA), we need to stop iterating on i.
+                if (secondaryKey === keyA) break;
+            }
+        }
 
         // Write the merged formats list back to the standard field
         for (const entry of merged.values()) {
@@ -290,7 +408,7 @@ const LibraryView = (() => {
     /**
      * Build unified view merging all collections
      */
-    async function renderUnified(ebooks, audiobooks, physical, search, sort, formatFilter) {
+    async function renderUnified(ebooks, audiobooks, physical, search, sort, formatFilter, statusFilter, groupBy, shelfFilter) {
         let books = mergeBooks(ebooks, audiobooks, physical);
 
         // Filter by search
@@ -313,10 +431,122 @@ const LibraryView = (() => {
             });
         }
 
+        // Filter by reading status
+        if (statusFilter && statusFilter !== 'all') {
+            books = books.filter(b => (b.readingStatus || 'unread') === statusFilter);
+        }
+
+        // Filter by shelf
+        if (shelfFilter && shelfFilter !== 'all') {
+            books = books.filter(b => b.shelf === shelfFilter);
+        }
+
         // Sort
         books = sortBooks(books, sort);
 
-        await renderShelf('unified-shelf', books, { showBadges: true });
+        // Currently Reading section (only when no status filter is active, or filter is 'all')
+        const crSection = document.getElementById('currently-reading-section');
+        if (crSection && (!statusFilter || statusFilter === 'all') && (!groupBy || groupBy === 'none')) {
+            const readingBooks = books.filter(b => (b.readingStatus || 'unread') === 'reading');
+            if (readingBooks.length > 0) {
+                crSection.hidden = false;
+                await renderShelf('currently-reading-shelf', readingBooks, { showBadges: true, showTickButton: true });
+            } else {
+                crSection.hidden = true;
+            }
+        } else if (crSection) {
+            crSection.hidden = true;
+        }
+
+        // Group-by mode
+        if (groupBy && groupBy !== 'none') {
+            await renderGroupedShelf('unified-shelf', books, groupBy);
+        } else {
+            await renderShelf('unified-shelf', books, { showBadges: true });
+        }
+    }
+
+    /**
+     * Render books in groups with section headers
+     */
+    async function renderGroupedShelf(containerId, books, groupBy) {
+        const container = document.getElementById(containerId);
+        if (!container) return;
+
+        const emptyEl = container.querySelector('.empty-state');
+        container.innerHTML = '';
+
+        if (!books.length) {
+            if (emptyEl) {
+                container.appendChild(emptyEl);
+                emptyEl.style.display = '';
+            }
+            return;
+        }
+
+        if (emptyEl) {
+            emptyEl.style.display = 'none';
+            container.appendChild(emptyEl);
+        }
+
+        // Group books
+        const groups = new Map();
+        for (const book of books) {
+            let key;
+            switch (groupBy) {
+                case 'shelf':
+                    key = book.shelf || 'No Shelf';
+                    break;
+                case 'genre':
+                    key = (book.tags && book.tags.length) ? book.tags[0] : 'Untagged';
+                    break;
+                case 'author':
+                    key = book.author || 'Unknown Author';
+                    break;
+                case 'status':
+                    key = STATUS_LABELS[book.readingStatus || 'unread'];
+                    break;
+                default:
+                    key = 'All';
+            }
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key).push(book);
+        }
+
+        // Sort group keys
+        const sortedKeys = Array.from(groups.keys()).sort((a, b) => {
+            // Put "No Shelf" / "Untagged" etc. last
+            if (a === 'No Shelf' || a === 'Untagged' || a === 'Unknown Author') return 1;
+            if (b === 'No Shelf' || b === 'Untagged' || b === 'Unknown Author') return -1;
+            return a.localeCompare(b);
+        });
+
+        for (const key of sortedKeys) {
+            const groupBooks = groups.get(key);
+
+            // Group header
+            const header = document.createElement('div');
+            header.className = 'shelf-group-header';
+            header.innerHTML = `<h3>${escapeHtml(key)}</h3><span class="shelf-group-count">${groupBooks.length} book${groupBooks.length !== 1 ? 's' : ''}</span>`;
+            container.appendChild(header);
+
+            // Render the group's books as a grid
+            const booksPerRow = Math.max(3, Math.floor((container.clientWidth || 900) / 170));
+            const rows = [];
+            for (let i = 0; i < groupBooks.length; i += booksPerRow) {
+                rows.push(groupBooks.slice(i, i + booksPerRow));
+            }
+
+            for (const row of rows) {
+                const rowEl = document.createElement('div');
+                rowEl.className = 'shelf-row';
+                for (let i = 0; i < row.length; i++) {
+                    const card = await createBookCard(row[i], i * 50, { showBadges: true });
+                    rowEl.appendChild(card);
+                }
+                container.appendChild(rowEl);
+            }
+        }
     }
 
     /**
@@ -404,8 +634,13 @@ const LibraryView = (() => {
             formatsEl.innerHTML += `<span style="font-size: var(--text-xs); color: var(--text-tertiary); margin-left: 8px;">${book.formats.join(', ').toUpperCase()}</span>`;
         }
 
+        // Reading status badge
+        const currentStatus = book.readingStatus || 'unread';
+        formatsEl.innerHTML += `<span class="format-badge badge-status-${currentStatus}" style="margin-left: 4px;">${STATUS_LABELS[currentStatus]}</span>`;
+
         // Meta
         const metaParts = [];
+        if (book.shelf) metaParts.push(`📚 ${book.shelf}`);
         if (book.series) metaParts.push(`Series: ${book.series}${book.seriesIndex ? ' #' + book.seriesIndex : ''}`);
         if (book.publisher) metaParts.push(`Publisher: ${book.publisher}`);
         if (book.publishDate) metaParts.push(`Published: ${Utils.formatDate(book.publishDate)}`);
@@ -413,6 +648,8 @@ const LibraryView = (() => {
         if (book.isbn) metaParts.push(`ISBN: ${book.isbn}`);
         if (book.rating) metaParts.push('★'.repeat(book.rating) + '☆'.repeat(5 - book.rating));
         if (book.fileCount) metaParts.push(`${book.fileCount} audio files`);
+        if (book.dateStarted) metaParts.push(`Started: ${Utils.formatDate(book.dateStarted)}`);
+        if (book.dateCompleted) metaParts.push(`Finished: ${Utils.formatDate(book.dateCompleted)}`);
         metaEl.innerHTML = metaParts.join(' &nbsp;·&nbsp; ');
 
         // Description
@@ -424,13 +661,60 @@ const LibraryView = (() => {
 
         // Actions
         actionsEl.innerHTML = '';
+
+        // Reading status buttons
+        const statusGroup = document.createElement('div');
+        statusGroup.className = 'modal-status-group';
+        statusGroup.innerHTML = `<span class="modal-status-label">Status:</span>`;
+
+        const statuses = ['unread', 'reading', 'read'];
+        for (const s of statuses) {
+            const btn = document.createElement('button');
+            btn.className = `btn btn-small ${currentStatus === s ? 'btn-primary' : 'btn-secondary'} btn-status-toggle`;
+            btn.textContent = STATUS_LABELS[s];
+            btn.dataset.status = s;
+            if (currentStatus === s) btn.disabled = true;
+            btn.addEventListener('click', async () => {
+                await updateBookStatus(book, s);
+                overlay.classList.remove('open');
+                App.refreshCurrentTab();
+            });
+            statusGroup.appendChild(btn);
+        }
+        actionsEl.appendChild(statusGroup);
+
+        // Shelf assignment
+        const shelfGroup = document.createElement('div');
+        shelfGroup.className = 'modal-shelf-group';
+        const shelves = await DB.getAll(DB.STORES.SHELVES);
+        shelfGroup.innerHTML = `<span class="modal-status-label">Shelf:</span>`;
+        const shelfSelect = document.createElement('select');
+        shelfSelect.className = 'modal-shelf-select';
+        shelfSelect.innerHTML = `<option value="">No Shelf</option>` +
+            shelves.map(s => `<option value="${escapeHtml(s.name)}"${book.shelf === s.name ? ' selected' : ''}>${escapeHtml(s.name)}</option>`).join('');
+        shelfSelect.addEventListener('change', async () => {
+            await updateBookShelf(book, shelfSelect.value);
+            overlay.classList.remove('open');
+            App.refreshCurrentTab();
+        });
+        shelfGroup.appendChild(shelfSelect);
+        actionsEl.appendChild(shelfGroup);
+
+        // Type-specific actions
         if (book.type === 'physical') {
-            actionsEl.innerHTML = `
-                <button class="btn btn-secondary" onclick="PhysicalBooks.openForm(this._book); document.getElementById('modal-overlay').classList.remove('open');">Edit</button>
+            const editDeleteGroup = document.createElement('div');
+            editDeleteGroup.className = 'modal-edit-group';
+            editDeleteGroup.innerHTML = `
+                <button class="btn btn-secondary" id="btn-modal-edit">Edit</button>
                 <button class="btn btn-danger" id="btn-modal-delete">Delete</button>
             `;
-            const deleteBtn = actionsEl.querySelector('#btn-modal-delete');
-            deleteBtn.addEventListener('click', async () => {
+            actionsEl.appendChild(editDeleteGroup);
+
+            editDeleteGroup.querySelector('#btn-modal-edit').addEventListener('click', () => {
+                PhysicalBooks.openForm(book);
+                overlay.classList.remove('open');
+            });
+            editDeleteGroup.querySelector('#btn-modal-delete').addEventListener('click', async () => {
                 if (await PhysicalBooks.deleteBook(book.id)) {
                     overlay.classList.remove('open');
                     App.refreshCurrentTab();
@@ -441,6 +725,71 @@ const LibraryView = (() => {
         overlay.classList.add('open');
     }
 
+    /**
+     * Update reading status for a book across all its source stores
+     */
+    async function updateBookStatus(book, newStatus) {
+        const now = new Date().toISOString();
+        const stores = [
+            { flag: book.hasEbook, store: DB.STORES.EBOOKS },
+            { flag: book.hasAudiobook, store: DB.STORES.AUDIOBOOKS },
+            { flag: book.hasPhysical || book.type === 'physical', store: DB.STORES.PHYSICAL }
+        ];
+
+        // Find the book across all stores and update
+        for (const { flag, store } of stores) {
+            if (!flag) continue;
+            const all = await DB.getAll(store);
+            const matchKey = Utils.matchKey(book.title, book.author);
+            for (const b of all) {
+                const bKey = Utils.matchKey(b.title, b.author);
+                if (bKey === matchKey || b.id === book.id) {
+                    b.readingStatus = newStatus;
+                    if (newStatus === 'reading' && !b.dateStarted) {
+                        b.dateStarted = now;
+                    }
+                    if (newStatus === 'read') {
+                        b.dateCompleted = now;
+                        if (!b.dateStarted) b.dateStarted = now;
+                    }
+                    if (newStatus === 'unread') {
+                        b.dateStarted = null;
+                        b.dateCompleted = null;
+                    }
+                    await DB.put(store, b);
+                }
+            }
+        }
+
+        Utils.toast(`Marked as "${STATUS_LABELS[newStatus]}"`, 'success');
+    }
+
+    /**
+     * Update shelf assignment for a book across all its source stores
+     */
+    async function updateBookShelf(book, shelfName) {
+        const stores = [
+            { flag: book.hasEbook, store: DB.STORES.EBOOKS },
+            { flag: book.hasAudiobook, store: DB.STORES.AUDIOBOOKS },
+            { flag: book.hasPhysical || book.type === 'physical', store: DB.STORES.PHYSICAL }
+        ];
+
+        for (const { flag, store } of stores) {
+            if (!flag) continue;
+            const all = await DB.getAll(store);
+            const matchKey = Utils.matchKey(book.title, book.author);
+            for (const b of all) {
+                const bKey = Utils.matchKey(b.title, b.author);
+                if (bKey === matchKey || b.id === book.id) {
+                    b.shelf = shelfName || '';
+                    await DB.put(store, b);
+                }
+            }
+        }
+
+        Utils.toast(shelfName ? `Moved to "${shelfName}"` : 'Removed from shelf', 'success');
+    }
+
     function escapeHtml(text) {
         if (!text) return '';
         const div = document.createElement('div');
@@ -448,5 +797,5 @@ const LibraryView = (() => {
         return div.innerHTML;
     }
 
-    return { renderShelf, renderWishlist, renderUnified, renderCollection, showDetail };
+    return { renderShelf, renderWishlist, renderUnified, renderCollection, showDetail, updateBookStatus, updateBookShelf };
 })();

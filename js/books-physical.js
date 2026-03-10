@@ -31,11 +31,15 @@ const PhysicalBooks = (() => {
             document.getElementById('form-genre').value = (book.tags || []).join(', ');
             document.getElementById('form-rating').value = book.rating || 0;
             document.getElementById('form-notes').value = book.notes || '';
+            document.getElementById('form-reading-status').value = book.readingStatus || 'unread';
+            document.getElementById('form-shelf').value = book.shelf || '';
             updateStarDisplay(book.rating || 0);
         } else {
             document.getElementById('book-form').reset();
             document.getElementById('form-book-id').value = '';
             document.getElementById('form-rating').value = '0';
+            document.getElementById('form-reading-status').value = 'unread';
+            document.getElementById('form-shelf').value = '';
             updateStarDisplay(0);
         }
 
@@ -211,6 +215,7 @@ const PhysicalBooks = (() => {
         const isNew = !formData.id;
 
         let coverId = null;
+        let existing = !isNew ? await DB.getById(DB.STORES.PHYSICAL, id) : null;
         const coverInput = document.getElementById('form-cover-upload');
         if (coverInput.files && coverInput.files[0]) {
             coverId = 'cover_' + id;
@@ -221,10 +226,13 @@ const PhysicalBooks = (() => {
             coverId = 'cover_' + id;
             await DB.saveCover(coverId, window._fetchedCover);
             window._fetchedCover = null;
-        } else if (!isNew) {
-            const existing = await DB.getById(DB.STORES.PHYSICAL, id);
-            if (existing) coverId = existing.coverId;
+        } else if (existing) {
+            coverId = existing.coverId;
         }
+
+        const readingStatus = document.getElementById('form-reading-status').value || 'unread';
+        const shelf = document.getElementById('form-shelf').value || '';
+        const now = new Date().toISOString();
 
         const book = {
             id,
@@ -237,7 +245,11 @@ const PhysicalBooks = (() => {
             notes: formData.notes || '',
             coverId,
             matchKey: Utils.matchKey(formData.title, formData.author),
-            dateAdded: isNew ? new Date().toISOString() : ((await DB.getById(DB.STORES.PHYSICAL, id)) || {}).dateAdded || new Date().toISOString()
+            dateAdded: isNew ? now : (existing?.dateAdded || now),
+            readingStatus,
+            shelf,
+            dateStarted: readingStatus === 'reading' ? (existing?.dateStarted || now) : (existing?.dateStarted || null),
+            dateCompleted: readingStatus === 'read' ? (existing?.dateCompleted || now) : null
         };
 
         await DB.put(DB.STORES.PHYSICAL, book);

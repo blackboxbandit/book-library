@@ -1,7 +1,7 @@
 /* ===== IndexedDB Storage Layer ===== */
 const DB = (() => {
     const DB_NAME = 'BookLibraryDB';
-    const DB_VERSION = 1;
+    const DB_VERSION = 2;
     let _db = null;
 
     const STORES = {
@@ -10,7 +10,8 @@ const DB = (() => {
         PHYSICAL: 'physical',
         WISHLIST: 'wishlist',
         COVERS: 'covers',
-        SETTINGS: 'settings'
+        SETTINGS: 'settings',
+        SHELVES: 'shelves'
     };
 
     /**
@@ -24,33 +25,55 @@ const DB = (() => {
 
             req.onupgradeneeded = (e) => {
                 const db = e.target.result;
+                const oldVersion = e.oldVersion;
 
-                // Books stores with indexes
-                [STORES.EBOOKS, STORES.AUDIOBOOKS, STORES.PHYSICAL].forEach(name => {
-                    if (!db.objectStoreNames.contains(name)) {
-                        const store = db.createObjectStore(name, { keyPath: 'id' });
-                        store.createIndex('title', 'title', { unique: false });
-                        store.createIndex('author', 'author', { unique: false });
-                        store.createIndex('matchKey', 'matchKey', { unique: false });
-                        store.createIndex('dateAdded', 'dateAdded', { unique: false });
+                if (oldVersion < 1) {
+                    // Books stores with indexes
+                    [STORES.EBOOKS, STORES.AUDIOBOOKS, STORES.PHYSICAL].forEach(name => {
+                        if (!db.objectStoreNames.contains(name)) {
+                            const store = db.createObjectStore(name, { keyPath: 'id' });
+                            store.createIndex('title', 'title', { unique: false });
+                            store.createIndex('author', 'author', { unique: false });
+                            store.createIndex('matchKey', 'matchKey', { unique: false });
+                            store.createIndex('dateAdded', 'dateAdded', { unique: false });
+                        }
+                    });
+
+                    // Wishlist
+                    if (!db.objectStoreNames.contains(STORES.WISHLIST)) {
+                        const ws = db.createObjectStore(STORES.WISHLIST, { keyPath: 'id' });
+                        ws.createIndex('title', 'title', { unique: false });
+                        ws.createIndex('matchKey', 'matchKey', { unique: false });
                     }
-                });
 
-                // Wishlist
-                if (!db.objectStoreNames.contains(STORES.WISHLIST)) {
-                    const ws = db.createObjectStore(STORES.WISHLIST, { keyPath: 'id' });
-                    ws.createIndex('title', 'title', { unique: false });
-                    ws.createIndex('matchKey', 'matchKey', { unique: false });
+                    // Covers (keyed by cover ID)
+                    if (!db.objectStoreNames.contains(STORES.COVERS)) {
+                        db.createObjectStore(STORES.COVERS, { keyPath: 'id' });
+                    }
+
+                    // Settings (key-value)
+                    if (!db.objectStoreNames.contains(STORES.SETTINGS)) {
+                        db.createObjectStore(STORES.SETTINGS, { keyPath: 'key' });
+                    }
                 }
 
-                // Covers (keyed by cover ID)
-                if (!db.objectStoreNames.contains(STORES.COVERS)) {
-                    db.createObjectStore(STORES.COVERS, { keyPath: 'id' });
-                }
+                if (oldVersion < 2) {
+                    // v2: Add readingStatus and shelf indexes to book stores
+                    [STORES.EBOOKS, STORES.AUDIOBOOKS, STORES.PHYSICAL].forEach(name => {
+                        const store = e.target.transaction.objectStore(name);
+                        if (!store.indexNames.contains('readingStatus')) {
+                            store.createIndex('readingStatus', 'readingStatus', { unique: false });
+                        }
+                        if (!store.indexNames.contains('shelf')) {
+                            store.createIndex('shelf', 'shelf', { unique: false });
+                        }
+                    });
 
-                // Settings (key-value)
-                if (!db.objectStoreNames.contains(STORES.SETTINGS)) {
-                    db.createObjectStore(STORES.SETTINGS, { keyPath: 'key' });
+                    // Shelves store
+                    if (!db.objectStoreNames.contains(STORES.SHELVES)) {
+                        const ss = db.createObjectStore(STORES.SHELVES, { keyPath: 'id' });
+                        ss.createIndex('name', 'name', { unique: true });
+                    }
                 }
             };
 

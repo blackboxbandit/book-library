@@ -123,3 +123,131 @@
         --book-height: 135px;
     }
 }
+
+/* ===== Currently Reading Section ===== */
+.currently-reading-section {
+    margin: 0 var(--space-xl);
+    padding: var(--space-lg);
+    background: linear-gradient(135deg, rgba(0, 122, 255, 0.08), rgba(191, 122, 240, 0.06));
+    border: 1px solid rgba(0, 122, 255, 0.15);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--space-lg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.currently-reading-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+}
+
+.currently-reading-header h3 {
+    font-size: var(--text-md);
+    font-weight: var(--weight-semibold);
+    color: var(--text-primary);
+    letter-spacing: -0.01em;
+}
+
+.currently-reading-shelf {
+    padding: 0 !important;
+    min-height: auto !important;
+}
+
+/* ===== Shelf Group Headers ===== */
+.shelf-group-header {
+    display: flex;
+    align-items: baseline;
+    gap: var(--space-md);
+    padding: var(--space-lg) 0 var(--space-sm);
+    border-bottom: 1px solid var(--separator);
+    margin-bottom: var(--space-sm);
+}
+
+.shelf-group-header:first-child {
+    padding-top: var(--space-sm);
+}
+
+.shelf-group-header h3 {
+    font-size: var(--text-lg);
+    font-weight: var(--weight-semibold);
+    color: var(--text-primary);
+}
+
+.shelf-group-count {
+    font-size: var(--text-sm);
+    color: var(--text-tertiary);
+    font-weight: var(--weight-regular);
+}
+
+/* ===== Reading Status Badge (on card) ===== */
+.reading-status-badge {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    font-size: 14px;
+    line-height: 1;
+    z-index: 3;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+/* ===== Tick-to-Complete Button ===== */
+.tick-complete-btn {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: var(--format-physical);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 5;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all var(--duration-normal) var(--ease-out);
+    box-shadow: 0 2px 8px rgba(48, 209, 88, 0.4);
+}
+
+.tick-complete-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.book-card:hover .tick-complete-btn {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.tick-complete-btn:hover {
+    background: #28c74d;
+    transform: scale(1.1) !important;
+}
+
+/* ===== Reading Status Badges in Modal ===== */
+.badge-status-unread {
+    background: var(--bg-elevated);
+    color: var(--text-secondary);
+}
+
+.badge-status-reading {
+    background: rgba(0, 122, 255, 0.15);
+    color: var(--accent);
+}
+
+.badge-status-read {
+    background: rgba(48, 209, 88, 0.15);
+    color: var(--format-physical);
+}
+
+@media (max-width: 768px) {
+    .currently-reading-section {
+        margin: 0 var(--space-md);
+        padding: var(--space-md);
+    }
+}
