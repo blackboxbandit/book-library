@@ -67,7 +67,7 @@ const ImportExport = (() => {
     async function importLibrary(file) {
         try {
             const text = await Utils.readFileAsText(file);
-            const data = JSON.parse(text);
+            const data = Utils.sanitizeImportedObject(JSON.parse(text));
 
             // Validate structure
             const validStores = ['ebooks', 'audiobooks', 'physical', 'wishlist', 'covers', 'settings'];

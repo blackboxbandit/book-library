@@ -44,7 +44,7 @@ const PhysicalBooks = (() => {
         }
 
         // Clear any previously fetched cover
-        window._fetchedCover = null;
+        let _fetchedCover = null;
 
         overlay.classList.add('open');
     }
@@ -126,17 +126,21 @@ const PhysicalBooks = (() => {
         container.innerHTML = `
             <div class="lookup-header">
                 <span>Select a book:</span>
-                <button type="button" class="lookup-dismiss" onclick="document.getElementById('lookup-results').hidden=true">✕</button>
+                <button type="button" class="lookup-dismiss" id="lookup-dismiss-btn">✕</button>
             </div>
         `;
+
+        document.getElementById('lookup-dismiss-btn').addEventListener('click', () => {
+            container.hidden = true;
+        });
 
         results.forEach((r, idx) => {
             const item = document.createElement('div');
             item.className = 'lookup-item';
             item.tabIndex = 0;
 
-            const coverHtml = r.coverUrl
-                ? `<img src="${r.coverUrl}" alt="" class="lookup-thumb" onerror="this.style.display='none'">`
+            const coverHtml = r.coverUrl && Utils.isValidUrl(r.coverUrl)
+                ? `<img src="${Utils.escapeHtml(r.coverUrl)}" alt="" class="lookup-thumb" onerror="this.style.display='none'">`
                 : `<div class="lookup-thumb lookup-thumb-placeholder">📖</div>`;
 
             item.innerHTML = `
@@ -191,11 +195,11 @@ const PhysicalBooks = (() => {
         }
 
         // Fetch and store the cover
-        if (result.coverUrl) {
+        if (result.coverUrl && Utils.isValidUrl(result.coverUrl)) {
             try {
                 const coverData = await Utils.fetchCoverFromUrl(result.coverUrl);
                 if (coverData) {
-                    window._fetchedCover = coverData;
+                    _fetchedCover = coverData;
                 }
             } catch {
                 // Cover fetch is best-effort
@@ -221,11 +225,11 @@ const PhysicalBooks = (() => {
             coverId = 'cover_' + id;
             const dataURL = await Utils.compressImage(coverInput.files[0]);
             if (dataURL) await DB.saveCover(coverId, dataURL);
-        } else if (window._fetchedCover) {
+        } else if (typeof _fetchedCover !== 'undefined' && _fetchedCover) {
             // Use cover fetched from lookup
             coverId = 'cover_' + id;
-            await DB.saveCover(coverId, window._fetchedCover);
-            window._fetchedCover = null;
+            await DB.saveCover(coverId, _fetchedCover);
+            _fetchedCover = null;
         } else if (existing) {
             coverId = existing.coverId;
         }

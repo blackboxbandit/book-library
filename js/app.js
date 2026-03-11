@@ -328,7 +328,7 @@ const App = (() => {
         if (filterEl) {
             const currentVal = filterEl.value;
             filterEl.innerHTML = '<option value="all">All Shelves</option>' +
-                shelves.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+                shelves.map(s => `<option value="${Utils.escapeHtml(s.name)}">${Utils.escapeHtml(s.name)}</option>`).join('');
             filterEl.value = currentVal;
         }
         // Form shelf selector
@@ -336,7 +336,7 @@ const App = (() => {
         if (formEl) {
             const currentVal = formEl.value;
             formEl.innerHTML = '<option value="">No Shelf</option>' +
-                shelves.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+                shelves.map(s => `<option value="${Utils.escapeHtml(s.name)}">${Utils.escapeHtml(s.name)}</option>`).join('');
             formEl.value = currentVal;
         }
     }
@@ -393,8 +393,8 @@ const App = (() => {
         }
         container.innerHTML = shelves.map(s => `
             <div class="shelf-list-item" data-id="${s.id}">
-                <span class="shelf-list-name">${s.name}</span>
-                <button class="btn btn-small btn-danger btn-delete-shelf" data-id="${s.id}" data-name="${s.name}">Delete</button>
+                <span class="shelf-list-name">${Utils.escapeHtml(s.name)}</span>
+                <button class="btn btn-small btn-danger btn-delete-shelf" data-id="${s.id}" data-name="${Utils.escapeHtml(s.name)}">Delete</button>
             </div>
         `).join('');
 

@@ -204,7 +204,10 @@ const LibraryView = (() => {
             if (item.coverId) {
                 const coverData = await DB.getCover(item.coverId);
                 if (coverData) {
-                    coverHTML = `<img class="wishlist-card-cover" src="${coverData}" alt="${escapeHtml(item.title)}">`;
+                    const isSafeUrl = coverData.startsWith('data:image/') || Utils.isValidUrl(coverData);
+                    if (isSafeUrl) {
+                        coverHTML = `<img class="wishlist-card-cover" src="${coverData}" alt="${escapeHtml(item.title)}">`;
+                    }
                 }
             }
             if (!coverHTML) {
@@ -235,8 +238,8 @@ const LibraryView = (() => {
                 <div class="wishlist-card-actions">
                     <button class="btn btn-small btn-secondary btn-edit-wishlist" data-id="${item.id}">Edit</button>
                     <button class="btn btn-small btn-danger btn-delete-wishlist" data-id="${item.id}">Delete</button>
-                    ${item.amazonUrl ? `<a class="btn btn-small btn-primary" href="${escapeHtml(item.amazonUrl)}" target="_blank" rel="noopener">Amazon</a>` : ''}
-                    ${(() => { const oxUrl = Utils.getOxfamSearchUrl(item.isbn, item.title); return oxUrl ? `<a class="btn btn-small btn-oxfam" href="${escapeHtml(oxUrl)}" target="_blank" rel="noopener">Oxfam</a>` : ''; })()}
+                    ${item.amazonUrl && Utils.isValidUrl(item.amazonUrl) ? `<a class="btn btn-small btn-primary" href="${escapeHtml(item.amazonUrl)}" target="_blank" rel="noopener">Amazon</a>` : ''}
+                    ${(() => { const oxUrl = Utils.getOxfamSearchUrl(item.isbn, item.title); return oxUrl && Utils.isValidUrl(oxUrl) ? `<a class="btn btn-small btn-oxfam" href="${escapeHtml(oxUrl)}" target="_blank" rel="noopener">Oxfam</a>` : ''; })()}
                 </div>
             `;
 
@@ -631,7 +634,7 @@ const LibraryView = (() => {
         if (book.hasAudiobook || book.type === 'audiobook') formatsEl.innerHTML += badgeHTML('audiobook', 'Audiobook');
         if (book.hasPhysical || book.type === 'physical') formatsEl.innerHTML += badgeHTML('physical', 'Physical');
         if (book.formats && book.formats.length) {
-            formatsEl.innerHTML += `<span style="font-size: var(--text-xs); color: var(--text-tertiary); margin-left: 8px;">${book.formats.join(', ').toUpperCase()}</span>`;
+            formatsEl.innerHTML += `<span style="font-size: var(--text-xs); color: var(--text-tertiary); margin-left: 8px;">${escapeHtml(book.formats.join(', ').toUpperCase())}</span>`;
         }
 
         // Reading status badge
@@ -640,16 +643,16 @@ const LibraryView = (() => {
 
         // Meta
         const metaParts = [];
-        if (book.shelf) metaParts.push(`📚 ${book.shelf}`);
-        if (book.series) metaParts.push(`Series: ${book.series}${book.seriesIndex ? ' #' + book.seriesIndex : ''}`);
-        if (book.publisher) metaParts.push(`Publisher: ${book.publisher}`);
-        if (book.publishDate) metaParts.push(`Published: ${Utils.formatDate(book.publishDate)}`);
-        if (book.language) metaParts.push(`Language: ${book.language}`);
-        if (book.isbn) metaParts.push(`ISBN: ${book.isbn}`);
+        if (book.shelf) metaParts.push(`📚 ${escapeHtml(book.shelf)}`);
+        if (book.series) metaParts.push(`Series: ${escapeHtml(book.series)}${book.seriesIndex ? ' #' + escapeHtml(book.seriesIndex) : ''}`);
+        if (book.publisher) metaParts.push(`Publisher: ${escapeHtml(book.publisher)}`);
+        if (book.publishDate) metaParts.push(`Published: ${escapeHtml(Utils.formatDate(book.publishDate))}`);
+        if (book.language) metaParts.push(`Language: ${escapeHtml(book.language)}`);
+        if (book.isbn) metaParts.push(`ISBN: ${escapeHtml(book.isbn)}`);
         if (book.rating) metaParts.push('★'.repeat(book.rating) + '☆'.repeat(5 - book.rating));
         if (book.fileCount) metaParts.push(`${book.fileCount} audio files`);
-        if (book.dateStarted) metaParts.push(`Started: ${Utils.formatDate(book.dateStarted)}`);
-        if (book.dateCompleted) metaParts.push(`Finished: ${Utils.formatDate(book.dateCompleted)}`);
+        if (book.dateStarted) metaParts.push(`Started: ${escapeHtml(Utils.formatDate(book.dateStarted))}`);
+        if (book.dateCompleted) metaParts.push(`Finished: ${escapeHtml(Utils.formatDate(book.dateCompleted))}`);
         metaEl.innerHTML = metaParts.join(' &nbsp;·&nbsp; ');
 
         // Description

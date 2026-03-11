@@ -64,9 +64,12 @@ self.addEventListener('fetch', (event) => {
         // Network-first for external requests (e.g. Open Library covers, Google Fonts)
         event.respondWith(
             fetch(event.request).then(response => {
-                // Cache external resources too for offline
-                const clone = response.clone();
-                caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                // Only cache external resources like images and fonts, skip APIs
+                const contentType = response.headers.get('content-type') || '';
+                if (contentType.includes('image/') || contentType.includes('font/')) {
+                    const clone = response.clone();
+                    caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+                }
                 return response;
             }).catch(() => caches.match(event.request))
         );

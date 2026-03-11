@@ -322,13 +322,63 @@ const Utils = (() => {
     }
 
     /**
-     * Strip HTML tags from text
+     * Strip HTML tags from text safely
      */
     function stripHTML(html) {
         if (!html) return '';
-        const tmp = document.createElement('div');
-        tmp.innerHTML = html;
-        return tmp.textContent || tmp.innerText || '';
+        const doc = new DOMParser().parseFromString(html, 'text/html');
+        return doc.body.textContent || '';
+    }
+
+    /**
+     * Escape HTML special characters
+     */
+    function escapeHtml(str) {
+        if (!str) return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    /**
+     * Sanitize a string by stripping HTML tags
+     */
+    function sanitizeString(str) {
+        if (typeof str !== 'string') return '';
+        return stripHTML(str).trim();
+    }
+
+    /**
+     * Validate an HTTP/HTTPS URL
+     */
+    function isValidUrl(url) {
+        if (!url) return false;
+        try {
+            const parsed = new URL(url);
+            return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+        } catch {
+            return false;
+        }
+    }
+
+    /**
+     * Sanitize an object parsed from JSON, removing prototype pollution keys
+     */
+    function sanitizeImportedObject(obj) {
+        if (!obj || typeof obj !== 'object') return obj;
+        if (Array.isArray(obj)) {
+            return obj.map(sanitizeImportedObject);
+        }
+        const clean = {};
+        for (const key in obj) {
+            if (Object.prototype.hasOwnProperty.call(obj, key)) {
+                if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+                    continue; // Skip dangerous keys
+                }
+                clean[key] = sanitizeImportedObject(obj[key]);
+            }
+        }
+        return clean;
     }
 
     /**
@@ -509,6 +559,7 @@ const Utils = (() => {
         compressImage, compressDataURL, fetchCoverByISBN, fetchCoverFromUrl,
         parseOPF, stripHTML, formatDate,
         lookupByISBN, searchBooks,
-        getOxfamSearchUrl, lookupOxfamPrice
+        getOxfamSearchUrl, lookupOxfamPrice,
+        escapeHtml, sanitizeString, isValidUrl, sanitizeImportedObject
     };
 })();

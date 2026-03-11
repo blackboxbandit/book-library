@@ -145,7 +145,7 @@ const Wishlist = (() => {
             let items = [];
 
             if (file.name.endsWith('.json')) {
-                const parsed = JSON.parse(text);
+                const parsed = Utils.sanitizeImportedObject(JSON.parse(text));
                 items = Array.isArray(parsed) ? parsed : (parsed.items || parsed.wishlist || []);
             } else if (file.name.endsWith('.csv')) {
                 const parseCSVLine = (line) => {
@@ -229,18 +229,22 @@ const Wishlist = (() => {
                 const id = Utils.generateId();
                 const amazonPrice = parseFloat(item.amazonPrice || item.price || item.Price || '') || null;
                 const oxfamPrice = parseFloat(item.oxfamPrice || '') || null;
-                const imageUrl = item.imageUrl || item.image_url || item.coverUrl || '';
+                const imageUrlRaw = item.imageUrl || item.image_url || item.coverUrl || '';
+                const imageUrl = Utils.isValidUrl(imageUrlRaw) ? imageUrlRaw : '';
+
+                const rawAmazonUrl = item.amazonUrl || item.url || item.URL || item.link || '';
+                const cleanAmazonUrl = Utils.isValidUrl(rawAmazonUrl) ? rawAmazonUrl : '';
 
                 const record = {
                     id,
                     type: 'wishlist',
-                    title,
-                    author,
-                    isbn: item.isbn || item.ISBN || item.asin || item.ASIN || '',
+                    title: Utils.sanitizeString(title),
+                    author: Utils.sanitizeString(author),
+                    isbn: Utils.sanitizeString(item.isbn || item.ISBN || item.asin || item.ASIN || ''),
                     tags: [],
                     rating: 0,
-                    notes: item.notes || '',
-                    amazonUrl: item.amazonUrl || item.url || item.URL || item.link || '',
+                    notes: Utils.sanitizeString(item.notes || ''),
+                    amazonUrl: cleanAmazonUrl,
                     amazonPrice,
                     oxfamPrice,
                     priceHistory: amazonPrice || oxfamPrice ? [{ date: new Date().toISOString(), amazonPrice, oxfamPrice }] : [],
