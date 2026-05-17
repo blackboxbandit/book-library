@@ -37,6 +37,10 @@ const Utils = (() => {
         // Remove leading 'The', 'A', 'An'
         t = t.replace(/^(the|a|an)\s+/i, '');
 
+        // Remove edition information (e.g., "2nd edition", "3rd ed", "revised edition")
+        t = t.replace(/\b\d+(?:st|nd|rd|th)\s+ed(?:ition)?\b/gi, '');
+        t = t.replace(/\b(?:revised|updated)\s+ed(?:ition)?\b/gi, '');
+
         // Remove all non-alphanumeric characters
         t = t.replace(/[^a-z0-9]/g, '');
 

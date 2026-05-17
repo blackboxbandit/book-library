@@ -331,13 +331,21 @@ const App = (() => {
                 shelves.map(s => `<option value="${Utils.escapeHtml(s.name)}">${Utils.escapeHtml(s.name)}</option>`).join('');
             filterEl.value = currentVal;
         }
-        // Form shelf selector
-        const formEl = document.getElementById('form-shelf');
+        // Form shelf selector (now checkboxes)
+        const formEl = document.getElementById('form-shelves');
         if (formEl) {
-            const currentVal = formEl.value;
-            formEl.innerHTML = '<option value="">No Shelf</option>' +
-                shelves.map(s => `<option value="${Utils.escapeHtml(s.name)}">${Utils.escapeHtml(s.name)}</option>`).join('');
-            formEl.value = currentVal;
+            // Save currently checked values to preserve them during re-render
+            const checkedBoxes = Array.from(formEl.querySelectorAll('input:checked')).map(cb => cb.value);
+
+            formEl.innerHTML = shelves.map(s => {
+                const isChecked = checkedBoxes.includes(s.name) ? 'checked' : '';
+                return `
+                    <label>
+                        <input type="checkbox" name="shelves" value="${Utils.escapeHtml(s.name)}" ${isChecked}>
+                        ${Utils.escapeHtml(s.name)}
+                    </label>
+                `;
+            }).join('');
         }
     }
 
@@ -408,8 +416,12 @@ const App = (() => {
                 for (const store of [DB.STORES.EBOOKS, DB.STORES.AUDIOBOOKS, DB.STORES.PHYSICAL]) {
                     const books = await DB.getAll(store);
                     for (const book of books) {
-                        if (book.shelf === name) {
+                        if (book.shelves && book.shelves.includes(name)) {
+                            book.shelves = book.shelves.filter(s => s !== name);
+                            await DB.put(store, book);
+                        } else if (book.shelf === name) {
                             book.shelf = '';
+                            if (!book.shelves) book.shelves = [];
                             await DB.put(store, book);
                         }
                     }
