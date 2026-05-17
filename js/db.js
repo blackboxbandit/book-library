@@ -1,7 +1,7 @@
 /* ===== IndexedDB Storage Layer ===== */
 const DB = (() => {
     const DB_NAME = 'BookLibraryDB';
-    const DB_VERSION = 2;
+    const DB_VERSION = 3;
     let _db = null;
 
     const STORES = {
@@ -74,6 +74,16 @@ const DB = (() => {
                         const ss = db.createObjectStore(STORES.SHELVES, { keyPath: 'id' });
                         ss.createIndex('name', 'name', { unique: true });
                     }
+                }
+
+                if (oldVersion < 3) {
+                    // v3: Add shelves array index with multiEntry
+                    [STORES.EBOOKS, STORES.AUDIOBOOKS, STORES.PHYSICAL].forEach(name => {
+                        const store = e.target.transaction.objectStore(name);
+                        if (!store.indexNames.contains('shelves')) {
+                            store.createIndex('shelves', 'shelves', { unique: false, multiEntry: true });
+                        }
+                    });
                 }
             };
 

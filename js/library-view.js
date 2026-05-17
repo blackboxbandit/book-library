@@ -310,7 +310,15 @@ const LibraryView = (() => {
                 if ((statusPriority[bookStatus] || 0) > (statusPriority[entryStatus] || 0)) {
                     entry.readingStatus = bookStatus;
                 }
-                if (!entry.shelf && book.shelf) entry.shelf = book.shelf;
+                // Merge shelves
+                const entryShelves = entry.shelves || (entry.shelf ? [entry.shelf] : []);
+                const bookShelves = book.shelves || (book.shelf ? [book.shelf] : []);
+                if (bookShelves.length > 0) {
+                    entry.shelves = [...new Set([...entryShelves, ...bookShelves])];
+                    entry.shelf = entry.shelves.length > 0 ? entry.shelves[0] : '';
+                } else if (!entry.shelves) {
+                    entry.shelves = entryShelves;
+                }
                 if (!entry.dateStarted && book.dateStarted) entry.dateStarted = book.dateStarted;
                 if (!entry.dateCompleted && book.dateCompleted) entry.dateCompleted = book.dateCompleted;
             }
@@ -441,7 +449,7 @@ const LibraryView = (() => {
 
         // Filter by shelf
         if (shelfFilter && shelfFilter !== 'all') {
-            books = books.filter(b => b.shelf === shelfFilter);
+            books = books.filter(b => b.shelves && b.shelves.includes(shelfFilter));
         }
 
         // Sort
@@ -495,11 +503,17 @@ const LibraryView = (() => {
         // Group books
         const groups = new Map();
         for (const book of books) {
+            if (groupBy === 'shelf') {
+                const keys = (book.shelves && book.shelves.length > 0) ? book.shelves : ['No Shelf'];
+                for (const key of keys) {
+                    if (!groups.has(key)) groups.set(key, []);
+                    groups.get(key).push(book);
+                }
+                continue;
+            }
+
             let key;
             switch (groupBy) {
-                case 'shelf':
-                    key = book.shelf || 'No Shelf';
-                    break;
                 case 'genre':
                     key = (book.tags && book.tags.length) ? book.tags[0] : 'Untagged';
                     break;
@@ -643,7 +657,11 @@ const LibraryView = (() => {
 
         // Meta
         const metaParts = [];
-        if (book.shelf) metaParts.push(`📚 ${escapeHtml(book.shelf)}`);
+        if (book.shelves && book.shelves.length) {
+            metaParts.push(`📚 ${escapeHtml(book.shelves.join(', '))}`);
+        } else if (book.shelf) {
+            metaParts.push(`📚 ${escapeHtml(book.shelf)}`);
+        }
         if (book.series) metaParts.push(`Series: ${escapeHtml(book.series)}${book.seriesIndex ? ' #' + escapeHtml(book.seriesIndex) : ''}`);
         if (book.publisher) metaParts.push(`Publisher: ${escapeHtml(book.publisher)}`);
         if (book.publishDate) metaParts.push(`Published: ${escapeHtml(Utils.formatDate(book.publishDate))}`);
@@ -686,21 +704,41 @@ const LibraryView = (() => {
         }
         actionsEl.appendChild(statusGroup);
 
-        // Shelf assignment
+        // Shelf assignment (Multiple checkboxes via details UI or separate logic)
+        // Here we'll just show the checkboxes in the modal
         const shelfGroup = document.createElement('div');
         shelfGroup.className = 'modal-shelf-group';
-        const shelves = await DB.getAll(DB.STORES.SHELVES);
-        shelfGroup.innerHTML = `<span class="modal-status-label">Shelf:</span>`;
-        const shelfSelect = document.createElement('select');
-        shelfSelect.className = 'modal-shelf-select';
-        shelfSelect.innerHTML = `<option value="">No Shelf</option>` +
-            shelves.map(s => `<option value="${escapeHtml(s.name)}"${book.shelf === s.name ? ' selected' : ''}>${escapeHtml(s.name)}</option>`).join('');
-        shelfSelect.addEventListener('change', async () => {
-            await updateBookShelf(book, shelfSelect.value);
+        const dbShelves = await DB.getAll(DB.STORES.SHELVES);
+        shelfGroup.innerHTML = `<span class="modal-status-label" style="display:block;margin-bottom:8px;">Shelves:</span>`;
+
+        const shelfCheckboxes = document.createElement('div');
+        shelfCheckboxes.className = 'checkbox-group';
+
+        const currentShelves = book.shelves || (book.shelf ? [book.shelf] : []);
+
+        shelfCheckboxes.innerHTML = dbShelves.map(s => {
+            const isChecked = currentShelves.includes(s.name) ? 'checked' : '';
+            return `
+                <label>
+                    <input type="checkbox" value="${escapeHtml(s.name)}" ${isChecked}>
+                    ${escapeHtml(s.name)}
+                </label>
+            `;
+        }).join('');
+
+        const saveShelvesBtn = document.createElement('button');
+        saveShelvesBtn.className = 'btn btn-small btn-secondary';
+        saveShelvesBtn.textContent = 'Save Shelves';
+        saveShelvesBtn.style.marginTop = '8px';
+        saveShelvesBtn.addEventListener('click', async () => {
+            const selectedShelves = Array.from(shelfCheckboxes.querySelectorAll('input:checked')).map(cb => cb.value);
+            await updateBookShelves(book, selectedShelves);
             overlay.classList.remove('open');
             App.refreshCurrentTab();
         });
-        shelfGroup.appendChild(shelfSelect);
+
+        shelfGroup.appendChild(shelfCheckboxes);
+        shelfGroup.appendChild(saveShelvesBtn);
         actionsEl.appendChild(shelfGroup);
 
         // Type-specific actions
@@ -770,7 +808,7 @@ const LibraryView = (() => {
     /**
      * Update shelf assignment for a book across all its source stores
      */
-    async function updateBookShelf(book, shelfName) {
+    async function updateBookShelves(book, shelvesArray) {
         const stores = [
             { flag: book.hasEbook, store: DB.STORES.EBOOKS },
             { flag: book.hasAudiobook, store: DB.STORES.AUDIOBOOKS },
@@ -784,13 +822,14 @@ const LibraryView = (() => {
             for (const b of all) {
                 const bKey = Utils.matchKey(b.title, b.author);
                 if (bKey === matchKey || b.id === book.id) {
-                    b.shelf = shelfName || '';
+                    b.shelves = shelvesArray;
+                    b.shelf = shelvesArray.length > 0 ? shelvesArray[0] : '';
                     await DB.put(store, b);
                 }
             }
         }
 
-        Utils.toast(shelfName ? `Moved to "${shelfName}"` : 'Removed from shelf', 'success');
+        Utils.toast('Shelves updated', 'success');
     }
 
     function escapeHtml(text) {
@@ -800,5 +839,5 @@ const LibraryView = (() => {
         return div.innerHTML;
     }
 
-    return { renderShelf, renderWishlist, renderUnified, renderCollection, showDetail, updateBookStatus, updateBookShelf };
+    return { renderShelf, renderWishlist, renderUnified, renderCollection, showDetail, updateBookStatus, updateBookShelves };
 })();

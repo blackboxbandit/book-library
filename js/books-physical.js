@@ -32,14 +32,24 @@ const PhysicalBooks = (() => {
             document.getElementById('form-rating').value = book.rating || 0;
             document.getElementById('form-notes').value = book.notes || '';
             document.getElementById('form-reading-status').value = book.readingStatus || 'unread';
-            document.getElementById('form-shelf').value = book.shelf || '';
+
+            // Set checkboxes for shelves
+            const shelves = book.shelves || (book.shelf ? [book.shelf] : []);
+            document.querySelectorAll('#form-shelves input[type="checkbox"]').forEach(cb => {
+                cb.checked = shelves.includes(cb.value);
+            });
+
             updateStarDisplay(book.rating || 0);
         } else {
             document.getElementById('book-form').reset();
             document.getElementById('form-book-id').value = '';
             document.getElementById('form-rating').value = '0';
             document.getElementById('form-reading-status').value = 'unread';
-            document.getElementById('form-shelf').value = '';
+
+            document.querySelectorAll('#form-shelves input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+
             updateStarDisplay(0);
         }
 
@@ -235,7 +245,7 @@ const PhysicalBooks = (() => {
         }
 
         const readingStatus = document.getElementById('form-reading-status').value || 'unread';
-        const shelf = document.getElementById('form-shelf').value || '';
+        const shelves = Array.from(document.querySelectorAll('#form-shelves input[type="checkbox"]:checked')).map(cb => cb.value);
         const now = new Date().toISOString();
 
         const book = {
@@ -251,7 +261,8 @@ const PhysicalBooks = (() => {
             matchKey: Utils.matchKey(formData.title, formData.author),
             dateAdded: isNew ? now : (existing?.dateAdded || now),
             readingStatus,
-            shelf,
+            shelves,
+            shelf: shelves.length > 0 ? shelves[0] : '', // Keep for backward compatibility
             dateStarted: readingStatus === 'reading' ? (existing?.dateStarted || now) : (existing?.dateStarted || null),
             dateCompleted: readingStatus === 'read' ? (existing?.dateCompleted || now) : null
         };

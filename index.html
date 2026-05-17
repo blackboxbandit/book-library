@@ -7,7 +7,7 @@
     <meta name="description"
         content="A beautiful virtual bookshelf to manage your eBooks, audiobooks, physical books and wishlists — all offline.">
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://openlibrary.org https://covers.openlibrary.org https://api.allorigins.win;">
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://openlibrary.org https://covers.openlibrary.org https://api.allorigins.win https://*.archive.org;">
     <meta name="theme-color" content="#0a0a0a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -486,10 +486,10 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="form-shelf">Shelf</label>
-                        <select id="form-shelf">
-                            <option value="">No Shelf</option>
-                        </select>
+                        <label>Shelves</label>
+                        <div class="checkbox-group" id="form-shelves">
+                            <!-- Populated via JS -->
+                        </div>
                     </div>
                 </div>
                 <div class="form-group">
