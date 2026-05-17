@@ -56,6 +56,10 @@ const Utils = (() => {
         // Remove common noise words at end: "ePub eBook", "Audiobook", etc.
         t = t.replace(/\s*(epub|ebook|audiobook|unabridged|abridged|pdf|mobi)\s*/gi, '');
 
+        // Remove edition information (e.g., "2nd edition", "3rd ed", "revised edition")
+        t = t.replace(/\b\d+(?:st|nd|rd|th)\s+ed(?:ition)?\b/gi, '');
+        t = t.replace(/\b(?:revised|updated)\s+ed(?:ition)?\b/gi, '');
+
         // Remove all non-alphanumeric characters
         t = t.replace(/[^a-z0-9]/g, '');
 
