@@ -19,8 +19,24 @@ const Utils = (() => {
         if (!title) title = '';
         if (!author) author = '';
 
+        // Pre-normalise known-bad author values
+        author = fuzzyNormaliseAuthor(author);
+
+        // If author is empty after normalisation AND title looks like
+        // "Author Name Title Name YYYY", try to split it
+        if (!author.trim()) {
+            const parsed = extractAuthorFromTitle(title);
+            if (parsed.author) {
+                title = parsed.title;
+                author = parsed.author;
+            }
+        }
+
         // 1. Clean Title
         let t = title.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+        // Strip trailing year (e.g. " 2011", " 2023")
+        t = t.replace(/\s+\d{4}\s*$/, '');
 
         // Remove text in parentheses or brackets (often contains formats, series, narrator info)
         t = t.replace(/\([^)]*\)/g, '').replace(/\[[^\]]*\]/g, '');
@@ -37,6 +53,13 @@ const Utils = (() => {
         // Remove leading 'The', 'A', 'An'
         t = t.replace(/^(the|a|an)\s+/i, '');
 
+        // Remove common noise words at end: "ePub eBook", "Audiobook", etc.
+        t = t.replace(/\s*(epub|ebook|audiobook|unabridged|abridged|pdf|mobi)\s*/gi, '');
+
+        // Remove edition information (e.g., "2nd edition", "3rd ed", "revised edition")
+        t = t.replace(/\b\d+(?:st|nd|rd|th)\s+ed(?:ition)?\b/gi, '');
+        t = t.replace(/\b(?:revised|updated)\s+ed(?:ition)?\b/gi, '');
+
         // Remove all non-alphanumeric characters
         t = t.replace(/[^a-z0-9]/g, '');
 
@@ -46,11 +69,169 @@ const Utils = (() => {
         // Replace periods with spaces to handle initials consistently (J.K. -> J K)
         a = a.replace(/\./g, ' ');
 
+        // Remove honorifics
+        a = a.replace(/\b(dr|prof|sir|dame|lord|lady|rev)\b/gi, '');
+
         let aParts = a.split(/[\s,]+/).filter(Boolean);
         aParts.sort();
         a = aParts.join('').replace(/[^a-z0-9]/g, '');
 
         return t + '|||' + a;
+    }
+
+    /**
+     * Normalise author strings, fixing known bad patterns.
+     * "Audio Books" / "Audiobooks" → empty, honorifics removed, etc.
+     */
+    function fuzzyNormaliseAuthor(author) {
+        if (!author) return '';
+        let a = author.trim();
+        // Known generic/bad author values
+        const badAuthors = ['audio books', 'audiobooks', 'unknown', 'various', 'n/a', 'intro', 'chap 1', 'chap 2'];
+        if (badAuthors.includes(a.toLowerCase())) return '';
+        // Remove "chap N" / "chapter N" patterns
+        if (/^chap(ter)?\s+\d+$/i.test(a)) return '';
+        return a;
+    }
+
+    /**
+     * Normalise a title for fuzzy comparison.
+     * Strips years, subtitles, parentheticals, articles, format words.
+     */
+    function fuzzyNormaliseTitle(title) {
+        if (!title) return '';
+        let t = title.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+        // Strip trailing year
+        t = t.replace(/\s+\d{4}\s*$/, '');
+        // Remove parentheticals and brackets
+        t = t.replace(/\([^)]*\)/g, '').replace(/\[[^\]]*\]/g, '');
+        // Remove subtitle after colon/dash
+        const m = t.match(/^([^:\-–—]+)/);
+        if (m) t = m[1];
+        // Remove articles
+        t = t.replace(/,\s*(the|a|an)\s*$/i, '');
+        t = t.replace(/^(the|a|an)\s+/i, '');
+        // Remove format noise
+        t = t.replace(/\s*(epub|ebook|audiobook|unabridged|abridged|pdf|mobi)\s*/gi, '');
+        // Collapse whitespace
+        t = t.replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, ' ');
+        return t;
+    }
+
+    /**
+     * Try to extract an author name prefixed to a title.
+     * Handles patterns like "Daniel Kahneman Thinking, Fast and Slow 2011"
+     * or "Harvard Business Review HBR Guide to Being a Great Boss 2022"
+     */
+    function extractAuthorFromTitle(rawTitle) {
+        if (!rawTitle) return { title: rawTitle, author: '' };
+        // Strip trailing year first
+        let name = rawTitle.replace(/\s+\d{4}\s*$/, '').trim();
+
+        // Known multi-word author prefixes
+        const knownPrefixes = [
+            'harvard business review',
+            'dr emily falk', 'dr emily', 'charles t munger', 'charles t. munger',
+            'eric schmidt', 'jeremy grantham', 'daniel kahneman', 'amy harper'
+        ];
+        const nameLower = name.toLowerCase();
+        for (const prefix of knownPrefixes) {
+            if (nameLower.startsWith(prefix + ' ')) {
+                return {
+                    title: name.slice(prefix.length).trim(),
+                    author: name.slice(0, prefix.length).trim()
+                };
+            }
+        }
+
+        // Heuristic: try 2-word and 3-word author splits
+        const words = name.split(/\s+/);
+        if (words.length >= 3) {
+            // Prefer 2-word author
+            return {
+                title: words.slice(2).join(' '),
+                author: words.slice(0, 2).join(' ')
+            };
+        }
+        return { title: rawTitle, author: '' };
+    }
+
+    /**
+     * Levenshtein edit distance between two strings.
+     */
+    function levenshteinDistance(a, b) {
+        if (a === b) return 0;
+        if (!a.length) return b.length;
+        if (!b.length) return a.length;
+
+        // Use two-row optimisation for memory efficiency
+        let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+        let curr = new Array(b.length + 1);
+
+        for (let i = 1; i <= a.length; i++) {
+            curr[0] = i;
+            for (let j = 1; j <= b.length; j++) {
+                const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+                curr[j] = Math.min(
+                    prev[j] + 1,       // deletion
+                    curr[j - 1] + 1,   // insertion
+                    prev[j - 1] + cost  // substitution
+                );
+            }
+            [prev, curr] = [curr, prev];
+        }
+        return prev[b.length];
+    }
+
+    /**
+     * Compute a 0–1 fuzzy match score between two books.
+     * 1.0 = perfect match, 0.0 = no match.
+     * Threshold of ~0.7 is a good merge candidate.
+     */
+    function fuzzyMatchScore(titleA, authorA, titleB, authorB) {
+        const normTA = fuzzyNormaliseTitle(titleA);
+        const normTB = fuzzyNormaliseTitle(titleB);
+        if (!normTA || !normTB) return 0;
+        if (normTA.length < 3 || normTB.length < 3) return 0;
+
+        // Title similarity via Levenshtein
+        const maxLen = Math.max(normTA.length, normTB.length);
+        const titleDist = levenshteinDistance(normTA, normTB);
+        const titleSim = 1 - (titleDist / maxLen);
+
+        // Also check substring containment (handles prefix/suffix differences)
+        const containsSim = (normTA.includes(normTB) || normTB.includes(normTA))
+            ? Math.min(normTA.length, normTB.length) / maxLen
+            : 0;
+
+        const bestTitleSim = Math.max(titleSim, containsSim);
+
+        // Author similarity
+        const normAA = fuzzyNormaliseAuthor(authorA).toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+        const normAB = fuzzyNormaliseAuthor(authorB).toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+
+        let authorSim = 0;
+        if (!normAA || !normAB) {
+            // If one author is unknown, rely more heavily on title
+            authorSim = bestTitleSim > 0.85 ? 0.5 : 0;
+        } else {
+            // Check word overlap
+            const wordsA = normAA.split(/\s+/).filter(w => w.length > 1);
+            const wordsB = normAB.split(/\s+/).filter(w => w.length > 1);
+            const overlap = wordsA.filter(w => wordsB.includes(w)).length;
+            const maxWords = Math.max(wordsA.length, wordsB.length);
+            authorSim = maxWords > 0 ? overlap / maxWords : 0;
+
+            // Also try Levenshtein on full author string
+            const authorMaxLen = Math.max(normAA.length, normAB.length);
+            if (authorMaxLen > 0) {
+                const authorLevSim = 1 - (levenshteinDistance(normAA, normAB) / authorMaxLen);
+                authorSim = Math.max(authorSim, authorLevSim);
+            }
+        }
+
+        // Combined score: title weighted 65%, author 35%
+        return bestTitleSim * 0.65 + authorSim * 0.35;
     }
 
     /**
@@ -560,6 +741,8 @@ const Utils = (() => {
         parseOPF, stripHTML, formatDate,
         lookupByISBN, searchBooks,
         getOxfamSearchUrl, lookupOxfamPrice,
-        escapeHtml, sanitizeString, isValidUrl, sanitizeImportedObject
+        escapeHtml, sanitizeString, isValidUrl, sanitizeImportedObject,
+        fuzzyNormaliseTitle, fuzzyNormaliseAuthor, extractAuthorFromTitle,
+        levenshteinDistance, fuzzyMatchScore
     };
 })();

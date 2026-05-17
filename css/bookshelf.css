@@ -1,25 +1,94 @@
-/* ===== Bookshelf — Clean Grid Layout ===== */
+/* ===== Bookshelf — Authentic Wooden Library ===== */
 
+/* --- Bookshelf Container --- */
 .bookshelf-container {
-    padding: var(--space-md) var(--space-xl) var(--space-2xl);
+    padding: var(--space-xl) var(--space-xl) var(--space-2xl);
     min-height: 60vh;
     position: relative;
+    /* Deep rich backdrop for the inside of the bookcase */
+    background:
+        radial-gradient(ellipse at 50% 0%, rgba(200, 150, 100, 0.05), transparent 60%),
+        linear-gradient(180deg, rgba(30, 20, 10, 0.95), rgba(10, 5, 3, 0.98));
+    border: 16px solid var(--shelf-wood);
+    border-image: linear-gradient(
+        to bottom right,
+        var(--shelf-wood-light),
+        var(--shelf-wood),
+        var(--shelf-wood-dark)
+    ) 1;
+    box-shadow:
+        inset 0 16px 32px rgba(0, 0, 0, 0.8),
+        inset 0 0 16px rgba(0, 0, 0, 0.6),
+        0 12px 32px rgba(0,0,0,0.5);
+    margin: 0 var(--space-xl) var(--space-xl);
 }
 
-/* --- Grid Layout (replaces shelf rows) --- */
+/* --- Shelf Row: Wooden Plank with Books --- */
 .shelf-row {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(var(--book-width), 1fr));
-    gap: var(--space-xl) var(--space-lg);
+    gap: 0 var(--space-md);
     justify-items: center;
-    padding: var(--space-md) 0;
-    margin-bottom: var(--space-lg);
+    align-items: flex-end;
+    padding: var(--space-lg) var(--space-md) 0;
+    margin-bottom: 0;
+    position: relative;
 }
 
-/* Remove faux shelf planks */
-.shelf-row::after,
+/* Wooden shelf plank */
+.shelf-row::after {
+    content: '';
+    position: absolute;
+    bottom: calc(-1 * var(--shelf-plank-height));
+    left: -12px;
+    right: -12px;
+    height: var(--shelf-plank-height);
+    background-image:
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            rgba(0, 0, 0, 0.05) 2px,
+            transparent 4px
+        ),
+        linear-gradient(
+            180deg,
+            var(--shelf-wood-light) 0%,
+            var(--shelf-wood) 40%,
+            var(--shelf-wood-dark) 100%
+        );
+    border-radius: 2px 2px 4px 4px;
+    box-shadow:
+        0 8px 16px var(--shelf-shadow),
+        0 20px 24px rgba(0, 0, 0, 0.4),
+        0 1px 0 var(--shelf-highlight) inset,
+        0 -1px 3px rgba(0, 0, 0, 0.3) inset;
+    z-index: var(--z-shelf);
+}
+
+/* Shelf plank front edge highlight */
 .shelf-row::before {
-    display: none;
+    content: '';
+    position: absolute;
+    bottom: calc(-1 * var(--shelf-plank-height));
+    left: -12px;
+    right: -12px;
+    height: 3px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 220, 170, 0.12) 20%,
+        rgba(255, 220, 170, 0.18) 50%,
+        rgba(255, 220, 170, 0.12) 80%,
+        transparent 100%
+    );
+    border-radius: 2px 2px 0 0;
+    z-index: calc(var(--z-shelf) + 1);
+}
+
+/* Space for the plank below */
+.shelf-row {
+    padding-bottom: calc(var(--shelf-plank-height) + var(--space-md));
+    margin-bottom: var(--space-lg);
 }
 
 /* ===== Empty State ===== */
@@ -104,12 +173,21 @@
 
     .shelf-row {
         grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-        gap: var(--space-md);
+        gap: 0 var(--space-sm);
+        padding-left: var(--space-xs);
+        padding-right: var(--space-xs);
+    }
+
+    .shelf-row::after,
+    .shelf-row::before {
+        left: -6px;
+        right: -6px;
     }
 
     :root {
         --book-width: 110px;
         --book-height: 165px;
+        --shelf-plank-height: 14px;
     }
 }
 
@@ -121,6 +199,7 @@
     :root {
         --book-width: 90px;
         --book-height: 135px;
+        --shelf-plank-height: 12px;
     }
 }
 
@@ -153,16 +232,31 @@
 .currently-reading-shelf {
     padding: 0 !important;
     min-height: auto !important;
+    background: none !important;
 }
 
-/* ===== Shelf Group Headers ===== */
+.currently-reading-shelf .shelf-row::after,
+.currently-reading-shelf .shelf-row::before {
+    display: none;
+}
+
+.currently-reading-shelf .shelf-row {
+    padding-bottom: var(--space-sm);
+    margin-bottom: 0;
+}
+
+/* ===== Shelf Group Headers — Library Section Dividers ===== */
 .shelf-group-header {
     display: flex;
-    align-items: baseline;
-    gap: var(--space-md);
-    padding: var(--space-lg) 0 var(--space-sm);
-    border-bottom: 1px solid var(--separator);
-    margin-bottom: var(--space-sm);
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-xl) 0 0;
+    margin-bottom: var(--space-md);
+    position: relative;
+}
+
+.shelf-group-header::after {
+    display: none;
 }
 
 .shelf-group-header:first-child {
@@ -170,15 +264,51 @@
 }
 
 .shelf-group-header h3 {
-    font-size: var(--text-lg);
-    font-weight: var(--weight-semibold);
-    color: var(--text-primary);
+    font-family: 'Times New Roman', serif;
+    font-size: var(--text-md);
+    font-weight: var(--weight-bold);
+    color: #2b1d0e;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    padding: 8px 32px;
+    background: linear-gradient(to bottom, #d4af37, #aa7c11, #f9e596, #aa7c11);
+    border-radius: 2px;
+    box-shadow:
+        0 4px 10px rgba(0, 0, 0, 0.8),
+        inset 0 1px 1px rgba(255, 255, 255, 0.8),
+        inset 0 -1px 2px rgba(0, 0, 0, 0.5),
+        inset 0 0 4px rgba(212, 175, 55, 0.5);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+    position: relative;
+    border: none;
+    -webkit-text-fill-color: initial;
+    background-clip: initial;
+    white-space: nowrap;
+}
+
+.shelf-group-header h3::before,
+.shelf-group-header h3::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #5c4308;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.4);
+}
+
+.shelf-group-header h3::before {
+    left: 10px;
+}
+
+.shelf-group-header h3::after {
+    right: 10px;
 }
 
 .shelf-group-count {
-    font-size: var(--text-sm);
-    color: var(--text-tertiary);
-    font-weight: var(--weight-regular);
+    display: none;
 }
 
 /* ===== Reading Status Badge (on card) ===== */

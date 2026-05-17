@@ -27,6 +27,16 @@
     --format-physical-bg: rgba(48, 209, 88, 0.12);
     --format-sale: #FF453A;
 
+    /* — Bookshelf wood palette — */
+    --shelf-wood: #3d2b1f;
+    --shelf-wood-light: #5a3e2e;
+    --shelf-wood-dark: #2a1d14;
+    --shelf-grain: rgba(255, 255, 255, 0.03);
+    --shelf-shadow: rgba(0, 0, 0, 0.7);
+    --shelf-highlight: rgba(255, 220, 170, 0.08);
+    --shelf-plank-height: 18px;
+    --shelf-ambient: rgba(255, 200, 120, 0.04);
+
     /* — Surfaces — */
     --glass-bg: rgba(28, 28, 30, 0.72);
     --glass-border: rgba(255, 255, 255, 0.06);
@@ -44,11 +54,11 @@
     --space-2xl: 48px;
     --space-3xl: 72px;
 
-    /* — Radii — */
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 20px;
-    --radius-xl: 28px;
+    /* — Radii (Apple Squircle look) — */
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
     --radius-full: 9999px;
 
     /* — Shadows — */

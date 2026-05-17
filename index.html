@@ -7,7 +7,7 @@
     <meta name="description"
         content="A beautiful virtual bookshelf to manage your eBooks, audiobooks, physical books and wishlists — all offline.">
     <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://openlibrary.org https://covers.openlibrary.org https://api.allorigins.win;">
+        content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://openlibrary.org https://covers.openlibrary.org https://api.allorigins.win https://*.archive.org;">
     <meta name="theme-color" content="#0a0a0a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -249,6 +249,24 @@
                         </svg>
                         Add Book
                     </button>
+                    <button class="btn btn-secondary" id="btn-import-physical">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="7 10 12 15 17 10" />
+                            <line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        Import JSON
+                    </button>
+                    <button class="btn btn-secondary" id="btn-lookup-all-physical" title="Batch lookup ISBNs and cover art for all books missing them">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="11" cy="11" r="7" />
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                        </svg>
+                        Lookup All Covers
+                    </button>
+                    <input type="file" id="physical-file-input" accept=".json" hidden>
                     <div class="search-box">
                         <span class="search-icon"><svg viewBox="0 0 24 24">
                                 <circle cx="11" cy="11" r="7" />
@@ -258,6 +276,12 @@
                             autocomplete="off">
                     </div>
                 </div>
+            </div>
+            <div class="scan-progress" id="physical-lookup-progress" hidden>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="physical-progress-fill"></div>
+                </div>
+                <p class="progress-text" id="physical-progress-text">Looking up books…</p>
             </div>
             <div class="bookshelf-container" id="physical-shelf">
                 <div class="empty-state" id="physical-empty">
@@ -486,10 +510,10 @@
                         </select>
                     </div>
                     <div class="form-group">
-                        <label for="form-shelf">Shelf</label>
-                        <select id="form-shelf">
-                            <option value="">No Shelf</option>
-                        </select>
+                        <label>Shelves</label>
+                        <div class="checkbox-group" id="form-shelves">
+                            <!-- Populated via JS -->
+                        </div>
                     </div>
                 </div>
                 <div class="form-group">
