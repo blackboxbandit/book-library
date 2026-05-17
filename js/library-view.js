@@ -320,79 +320,101 @@ const LibraryView = (() => {
         addBooks(audiobooks, 'audiobook');
         addBooks(physical, 'physical');
 
+        // --- Helper to merge secondary entry into primary ---
+        function mergeEntryInto(primary, secondary) {
+            if (secondary.hasEbook) primary.hasEbook = true;
+            if (secondary.hasAudiobook) primary.hasAudiobook = true;
+            if (secondary.hasPhysical) primary.hasPhysical = true;
+            if (!primary.coverId && secondary.coverId) primary.coverId = secondary.coverId;
+            if (secondary.tags && secondary.tags.length) {
+                primary.tags = [...new Set([...(primary.tags || []), ...secondary.tags])];
+            }
+            if (secondary._allFormats && secondary._allFormats.length) {
+                primary._allFormats = [...new Set([...(primary._allFormats || []), ...secondary._allFormats])];
+            }
+            if (secondary.formats && secondary.formats.length) {
+                primary._allFormats = [...new Set([...(primary._allFormats || []), ...secondary.formats])];
+            }
+            if (!primary.description && secondary.description) primary.description = secondary.description;
+            if (!primary.isbn && secondary.isbn) primary.isbn = secondary.isbn;
+            if (!primary.series && secondary.series) primary.series = secondary.series;
+            if (!primary.publisher && secondary.publisher) primary.publisher = secondary.publisher;
+            if (secondary.rating && (!primary.rating || secondary.rating > primary.rating)) primary.rating = secondary.rating;
+            const statusPriority = { reading: 3, read: 2, unread: 1 };
+            const bs = secondary.readingStatus || 'unread';
+            const ps = primary.readingStatus || 'unread';
+            if ((statusPriority[bs] || 0) > (statusPriority[ps] || 0)) {
+                primary.readingStatus = bs;
+            }
+            if (!primary.shelf && secondary.shelf) primary.shelf = secondary.shelf;
+        }
+
+        // --- ISBN-based merge pass ---
+        // Books with the same non-empty ISBN should always merge, even if
+        // matchKey didn't align (e.g. different subtitle formatting).
+        const isbnIndex = new Map(); // isbn → first matchKey
+        const entries = Array.from(merged.entries());
+        for (const [key, entry] of entries) {
+            if (!entry.isbn) continue;
+            const cleanIsbn = entry.isbn.replace(/[^0-9X]/gi, '');
+            if (cleanIsbn.length < 10) continue;
+            if (isbnIndex.has(cleanIsbn)) {
+                const primaryKey = isbnIndex.get(cleanIsbn);
+                if (primaryKey === key) continue;
+                const primary = merged.get(primaryKey);
+                if (!primary) continue;
+                mergeEntryInto(primary, entry);
+                merged.delete(key);
+            } else {
+                isbnIndex.set(cleanIsbn, key);
+            }
+        }
+
         // --- Fuzzy matching second pass ---
-        // Catch entries that didn't merge by exact matchKey but whose titles
-        // overlap (e.g. audiobook title contains ebook title or vice versa).
-        const entries = Array.from(merged.entries()); // [key, entry]
-        const normCache = new Map(); // key → normalised title string
+        // Use Levenshtein-based scoring to catch entries that didn't merge by
+        // exact matchKey but are clearly the same work (e.g. slightly different
+        // editions, author-in-title audiobook naming, format words in title).
+        const currentEntries = Array.from(merged.entries()); // [key, entry]
+        const FUZZY_THRESHOLD = 0.72;
 
-        const normTitle = (entry) => {
-            if (normCache.has(entry)) return normCache.get(entry);
-            const t = (entry.title || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-                .toLowerCase().replace(/[^a-z0-9\s]/g, '').trim().replace(/\s+/g, ' ');
-            normCache.set(entry, t);
-            return t;
-        };
-
-        for (let i = 0; i < entries.length; i++) {
-            const [keyA, entryA] = entries[i];
+        for (let i = 0; i < currentEntries.length; i++) {
+            const [keyA, entryA] = currentEntries[i];
             if (!merged.has(keyA)) continue; // already merged away
 
-            const normA = normTitle(entryA);
-            if (normA.length < 4) continue; // too short for reliable matching
-
-            for (let j = i + 1; j < entries.length; j++) {
-                const [keyB, entryB] = entries[j];
+            for (let j = i + 1; j < currentEntries.length; j++) {
+                const [keyB, entryB] = currentEntries[j];
                 if (!merged.has(keyB)) continue; // already merged away
 
-                const normB = normTitle(entryB);
-                if (normB.length < 4) continue;
+                // ISBN conflict guard: if both books have different ISBNs,
+                // they are definitely different books — skip fuzzy merge.
+                if (entryA.isbn && entryB.isbn) {
+                    const isbnA = entryA.isbn.replace(/[^0-9X]/gi, '');
+                    const isbnB = entryB.isbn.replace(/[^0-9X]/gi, '');
+                    if (isbnA.length >= 10 && isbnB.length >= 10 && isbnA !== isbnB) {
+                        continue;
+                    }
+                }
 
-                // Check if one title contains the other
-                const aContainsB = normA.includes(normB);
-                const bContainsA = normB.includes(normA);
-                if (!aContainsB && !bContainsA) continue;
+                const score = Utils.fuzzyMatchScore(
+                    entryA.title, entryA.author,
+                    entryB.title, entryB.author
+                );
 
-                // Also check author overlap — at least one author word must match
-                const authorWordsA = (entryA.author || '').toLowerCase().split(/\s+/).filter(w => w.length > 2);
-                const authorWordsB = (entryB.author || '').toLowerCase().split(/\s+/).filter(w => w.length > 2);
-                const authorOverlap = authorWordsA.some(w => authorWordsB.includes(w));
-                if (!authorOverlap && authorWordsA.length > 0 && authorWordsB.length > 0) continue;
+                if (score < FUZZY_THRESHOLD) continue;
 
                 // Merge B into A (keep the one with the shorter/cleaner title as primary)
-                const [primary, secondary, secondaryKey] = normA.length <= normB.length
+                const normTA = Utils.fuzzyNormaliseTitle(entryA.title);
+                const normTB = Utils.fuzzyNormaliseTitle(entryB.title);
+                const [primary, secondary, secondaryKey] = (normTA.length <= normTB.length)
                     ? [entryA, entryB, keyB]
                     : [entryB, entryA, keyA];
 
-                // Copy format flags
-                if (secondary.hasEbook) primary.hasEbook = true;
-                if (secondary.hasAudiobook) primary.hasAudiobook = true;
-                if (secondary.hasPhysical) primary.hasPhysical = true;
-                // Copy cover if missing
-                if (!primary.coverId && secondary.coverId) primary.coverId = secondary.coverId;
-                // Merge tags
-                if (secondary.tags && secondary.tags.length) {
-                    primary.tags = [...new Set([...(primary.tags || []), ...secondary.tags])];
-                }
-                // Merge formats
-                if (secondary._allFormats && secondary._allFormats.length) {
-                    primary._allFormats = [...new Set([...(primary._allFormats || []), ...secondary._allFormats])];
-                }
-                if (secondary.formats && secondary.formats.length) {
-                    primary._allFormats = [...new Set([...(primary._allFormats || []), ...secondary.formats])];
-                }
-                // Keep richer metadata
-                if (!primary.description && secondary.description) primary.description = secondary.description;
-                if (!primary.isbn && secondary.isbn) primary.isbn = secondary.isbn;
-                if (!primary.series && secondary.series) primary.series = secondary.series;
-                if (!primary.publisher && secondary.publisher) primary.publisher = secondary.publisher;
-                if (secondary.rating && (!primary.rating || secondary.rating > primary.rating)) primary.rating = secondary.rating;
+                mergeEntryInto(primary, secondary);
 
                 // Remove the secondary entry
                 merged.delete(secondaryKey);
 
-                // If we merged B into A (secondaryKey === keyB), entryA is already updated.
-                // If we merged A into B (secondaryKey === keyA), we need to stop iterating on i.
+                // If we merged A into B (secondaryKey === keyA), stop iterating on i
                 if (secondaryKey === keyA) break;
             }
         }
@@ -599,7 +621,45 @@ const LibraryView = (() => {
     }
 
     /**
-     * Show book detail modal
+     * Helper: determine which DB store a book lives in
+     */
+    function storeForBook(book) {
+        const type = book.type || book.sourceType;
+        if (type === 'ebook') return DB.STORES.EBOOKS;
+        if (type === 'audiobook') return DB.STORES.AUDIOBOOKS;
+        return DB.STORES.PHYSICAL;
+    }
+
+    /**
+     * Persist a field change to a book across all its source stores
+     */
+    async function persistBookField(book, fields) {
+        const stores = [
+            { flag: book.hasEbook, store: DB.STORES.EBOOKS },
+            { flag: book.hasAudiobook, store: DB.STORES.AUDIOBOOKS },
+            { flag: book.hasPhysical || book.type === 'physical', store: DB.STORES.PHYSICAL }
+        ];
+
+        const matchKey = Utils.matchKey(book.title, book.author);
+
+        for (const { flag, store } of stores) {
+            if (!flag) continue;
+            const all = await DB.getAll(store);
+            for (const b of all) {
+                const bKey = Utils.matchKey(b.title, b.author);
+                if (bKey === matchKey || b.id === book.id) {
+                    Object.assign(b, fields);
+                    await DB.put(store, b);
+                }
+            }
+        }
+
+        // Also update the live book object
+        Object.assign(book, fields);
+    }
+
+    /**
+     * Show book detail modal — with inline editing capabilities
      */
     async function showDetail(book) {
         const overlay = document.getElementById('modal-overlay');
@@ -615,20 +675,21 @@ const LibraryView = (() => {
         titleEl.textContent = book.title;
         authorEl.textContent = book.author;
 
-        // Cover
-        if (book.coverId) {
-            const coverData = await DB.getCover(book.coverId);
-            if (coverData) {
-                imgEl.src = coverData;
-                imgEl.style.display = '';
-            } else {
-                imgEl.style.display = 'none';
+        // ── Cover ──
+        async function refreshCover() {
+            if (book.coverId) {
+                const coverData = await DB.getCover(book.coverId);
+                if (coverData) {
+                    imgEl.src = coverData;
+                    imgEl.style.display = '';
+                    return;
+                }
             }
-        } else {
             imgEl.style.display = 'none';
         }
+        await refreshCover();
 
-        // Formats
+        // ── Formats ──
         formatsEl.innerHTML = '';
         if (book.hasEbook || book.type === 'ebook') formatsEl.innerHTML += badgeHTML('ebook', 'eBook');
         if (book.hasAudiobook || book.type === 'audiobook') formatsEl.innerHTML += badgeHTML('audiobook', 'Audiobook');
@@ -641,31 +702,357 @@ const LibraryView = (() => {
         const currentStatus = book.readingStatus || 'unread';
         formatsEl.innerHTML += `<span class="format-badge badge-status-${currentStatus}" style="margin-left: 4px;">${STATUS_LABELS[currentStatus]}</span>`;
 
-        // Meta
+        // ── Meta (static info) ──
         const metaParts = [];
         if (book.shelf) metaParts.push(`📚 ${escapeHtml(book.shelf)}`);
         if (book.series) metaParts.push(`Series: ${escapeHtml(book.series)}${book.seriesIndex ? ' #' + escapeHtml(book.seriesIndex) : ''}`);
         if (book.publisher) metaParts.push(`Publisher: ${escapeHtml(book.publisher)}`);
         if (book.publishDate) metaParts.push(`Published: ${escapeHtml(Utils.formatDate(book.publishDate))}`);
         if (book.language) metaParts.push(`Language: ${escapeHtml(book.language)}`);
-        if (book.isbn) metaParts.push(`ISBN: ${escapeHtml(book.isbn)}`);
-        if (book.rating) metaParts.push('★'.repeat(book.rating) + '☆'.repeat(5 - book.rating));
         if (book.fileCount) metaParts.push(`${book.fileCount} audio files`);
+        if (book.dateAdded) metaParts.push(`Added: ${escapeHtml(Utils.formatDate(book.dateAdded))}`);
         if (book.dateStarted) metaParts.push(`Started: ${escapeHtml(Utils.formatDate(book.dateStarted))}`);
         if (book.dateCompleted) metaParts.push(`Finished: ${escapeHtml(Utils.formatDate(book.dateCompleted))}`);
         metaEl.innerHTML = metaParts.join(' &nbsp;·&nbsp; ');
 
-        // Description
+        // ── Description / Notes ──
         descEl.textContent = book.description || book.notes || '';
         descEl.style.display = (book.description || book.notes) ? '' : 'none';
 
-        // Tags
-        tagsEl.innerHTML = (book.tags || []).map(t => `<span>${escapeHtml(t)}</span>`).join('');
+        // ── Tags (read-only display of existing tags goes here) ──
+        tagsEl.innerHTML = '';
 
-        // Actions
+        // ── Actions (all the interactive controls) ──
         actionsEl.innerHTML = '';
 
-        // Reading status buttons
+        // ────────────────────────────────────────
+        // 1. ISBN + Lookup row
+        // ────────────────────────────────────────
+        const isbnGroup = document.createElement('div');
+        isbnGroup.className = 'modal-enrichment-row';
+        isbnGroup.innerHTML = `
+            <span class="modal-status-label">ISBN:</span>
+            <input type="text" class="modal-inline-input" id="modal-isbn-input"
+                   value="${escapeHtml(book.isbn || '')}" placeholder="Enter ISBN…"
+                   style="width:160px; font-variant-numeric: tabular-nums;">
+            <button class="btn btn-small btn-primary" id="btn-modal-isbn-lookup" title="Look up book by ISBN">🔍 Lookup</button>
+            <button class="btn btn-small btn-secondary" id="btn-modal-isbn-save" title="Save ISBN">💾 Save</button>
+        `;
+        actionsEl.appendChild(isbnGroup);
+
+        // ISBN save
+        isbnGroup.querySelector('#btn-modal-isbn-save').addEventListener('click', async () => {
+            const newIsbn = isbnGroup.querySelector('#modal-isbn-input').value.trim();
+            await persistBookField(book, { isbn: newIsbn });
+            Utils.toast('ISBN saved.', 'success');
+        });
+
+        // ISBN lookup — searches Open Library, populates ISBN + optionally fetches cover
+        isbnGroup.querySelector('#btn-modal-isbn-lookup').addEventListener('click', async () => {
+            const isbn = isbnGroup.querySelector('#modal-isbn-input').value.trim();
+            const lookupBtn = isbnGroup.querySelector('#btn-modal-isbn-lookup');
+            lookupBtn.disabled = true;
+            lookupBtn.textContent = '⏳…';
+
+            try {
+                let result = null;
+                if (isbn) {
+                    result = await Utils.lookupByISBN(isbn);
+                }
+                if (!result) {
+                    // Fallback: search by title + author
+                    const query = [book.title, book.author].filter(Boolean).join(' ');
+                    const results = await Utils.searchBooks(query);
+                    result = results && results.length ? results[0] : null;
+                }
+
+                if (result) {
+                    // Populate ISBN
+                    if (result.isbn) {
+                        isbnGroup.querySelector('#modal-isbn-input').value = result.isbn;
+                        await persistBookField(book, { isbn: result.isbn });
+                    }
+                    // Populate tags if empty
+                    if (result.tags && result.tags.length && (!book.tags || !book.tags.length)) {
+                        await persistBookField(book, { tags: result.tags });
+                        renderInlineTags();
+                    }
+                    // Fetch cover if missing
+                    if (!book.coverId && result.coverUrl && Utils.isValidUrl(result.coverUrl)) {
+                        Utils.toast('Fetching cover…', 'info');
+                        const coverData = await Utils.fetchCoverFromUrl(result.coverUrl);
+                        if (coverData) {
+                            const coverId = 'cover_' + book.id;
+                            await DB.saveCover(coverId, coverData);
+                            await persistBookField(book, { coverId });
+                            await refreshCover();
+                        }
+                    }
+                    Utils.toast('Book info updated!', 'success');
+                    App.refreshCurrentTab();
+                } else {
+                    Utils.toast('No results found.', 'error');
+                }
+            } catch (err) {
+                Utils.toast('Lookup failed: ' + err.message, 'error');
+            } finally {
+                lookupBtn.disabled = false;
+                lookupBtn.textContent = '🔍 Lookup';
+            }
+        });
+
+        // ────────────────────────────────────────
+        // 2. Cover Management toolbar
+        // ────────────────────────────────────────
+        const coverGroup = document.createElement('div');
+        coverGroup.className = 'modal-enrichment-section';
+        coverGroup.innerHTML = `
+            <div class="modal-enrichment-label">Cover Art</div>
+            <div class="modal-enrichment-row">
+                <button class="btn btn-small btn-secondary" id="btn-modal-fetch-cover" title="Fetch cover from Open Library by ISBN">
+                    📥 Fetch by ISBN
+                </button>
+                <button class="btn btn-small btn-secondary" id="btn-modal-cover-upload" title="Upload a cover image from your computer">
+                    📁 Upload
+                </button>
+                <button class="btn btn-small btn-danger" id="btn-modal-remove-cover" title="Remove current cover" ${!book.coverId ? 'disabled' : ''}>
+                    🗑 Remove
+                </button>
+                <a class="btn btn-small btn-secondary" id="btn-modal-google-cover"
+                   href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(book.title + ' ' + book.author + ' book cover')}"
+                   target="_blank" rel="noopener" title="Search Google Images for this cover">
+                    🌐 Google
+                </a>
+            </div>
+            <div class="modal-enrichment-row" style="margin-top: 6px;">
+                <input type="text" class="modal-inline-input" id="modal-cover-url"
+                       placeholder="Paste cover image URL…" style="flex:1;">
+                <button class="btn btn-small btn-primary" id="btn-modal-apply-cover-url" title="Download and save cover from URL">Apply</button>
+            </div>
+            <input type="file" id="modal-cover-file-input" accept="image/*" hidden>
+        `;
+        actionsEl.appendChild(coverGroup);
+
+        // Fetch cover by ISBN
+        coverGroup.querySelector('#btn-modal-fetch-cover').addEventListener('click', async () => {
+            const isbn = isbnGroup.querySelector('#modal-isbn-input').value.trim() || book.isbn;
+            if (!isbn) {
+                Utils.toast('Enter an ISBN first.', 'error');
+                return;
+            }
+            Utils.toast('Fetching cover by ISBN…', 'info');
+            const coverData = await Utils.fetchCoverByISBN(isbn);
+            if (coverData) {
+                const coverId = 'cover_' + book.id;
+                await DB.saveCover(coverId, coverData);
+                await persistBookField(book, { coverId });
+                await refreshCover();
+                coverGroup.querySelector('#btn-modal-remove-cover').disabled = false;
+                Utils.toast('Cover updated!', 'success');
+                App.refreshCurrentTab();
+            } else {
+                Utils.toast('No cover found for this ISBN.', 'error');
+            }
+        });
+
+        // Upload cover from file
+        const fileInput = coverGroup.querySelector('#modal-cover-file-input');
+        coverGroup.querySelector('#btn-modal-cover-upload').addEventListener('click', () => {
+            fileInput.click();
+        });
+        fileInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            Utils.toast('Processing cover…', 'info');
+            const dataURL = await Utils.compressImage(file);
+            if (dataURL) {
+                const coverId = 'cover_' + book.id;
+                await DB.saveCover(coverId, dataURL);
+                await persistBookField(book, { coverId });
+                await refreshCover();
+                coverGroup.querySelector('#btn-modal-remove-cover').disabled = false;
+                Utils.toast('Cover uploaded!', 'success');
+                App.refreshCurrentTab();
+            }
+            e.target.value = '';
+        });
+
+        // Remove cover
+        coverGroup.querySelector('#btn-modal-remove-cover').addEventListener('click', async () => {
+            if (!confirm('Remove the cover image?')) return;
+            if (book.coverId) {
+                await DB.remove(DB.STORES.COVERS, book.coverId);
+            }
+            await persistBookField(book, { coverId: null });
+            await refreshCover();
+            coverGroup.querySelector('#btn-modal-remove-cover').disabled = true;
+            Utils.toast('Cover removed.', 'info');
+            App.refreshCurrentTab();
+        });
+
+        // Apply cover from URL
+        coverGroup.querySelector('#btn-modal-apply-cover-url').addEventListener('click', async () => {
+            const url = coverGroup.querySelector('#modal-cover-url').value.trim();
+            if (!url) {
+                Utils.toast('Paste an image URL first.', 'error');
+                return;
+            }
+            if (!Utils.isValidUrl(url)) {
+                Utils.toast('Invalid URL. Must start with http:// or https://', 'error');
+                return;
+            }
+            Utils.toast('Downloading cover…', 'info');
+            try {
+                const coverData = await Utils.fetchCoverFromUrl(url);
+                if (coverData) {
+                    const coverId = 'cover_' + book.id;
+                    await DB.saveCover(coverId, coverData);
+                    await persistBookField(book, { coverId });
+                    await refreshCover();
+                    coverGroup.querySelector('#btn-modal-remove-cover').disabled = false;
+                    coverGroup.querySelector('#modal-cover-url').value = '';
+                    Utils.toast('Cover updated!', 'success');
+                    App.refreshCurrentTab();
+                } else {
+                    Utils.toast('Could not download image from that URL.', 'error');
+                }
+            } catch (err) {
+                Utils.toast('Failed: ' + err.message, 'error');
+            }
+        });
+
+        // ────────────────────────────────────────
+        // 3. Inline Star Rating
+        // ────────────────────────────────────────
+        const ratingGroup = document.createElement('div');
+        ratingGroup.className = 'modal-enrichment-row';
+        const currentRating = book.rating || 0;
+        ratingGroup.innerHTML = `
+            <span class="modal-status-label">Rating:</span>
+            <div class="modal-star-rating" id="modal-star-rating">
+                ${[1,2,3,4,5].map(v => `<span class="modal-star ${v <= currentRating ? 'active' : ''}" data-val="${v}">★</span>`).join('')}
+            </div>
+            <button class="btn btn-small btn-secondary" id="btn-modal-clear-rating" title="Clear rating" style="margin-left: 4px; padding: 4px 6px; font-size: 11px;">✕</button>
+        `;
+        actionsEl.appendChild(ratingGroup);
+
+        const starContainer = ratingGroup.querySelector('#modal-star-rating');
+        const modalStars = starContainer.querySelectorAll('.modal-star');
+
+        function setStarDisplay(rating) {
+            modalStars.forEach(s => {
+                s.classList.toggle('active', parseInt(s.dataset.val) <= rating);
+            });
+        }
+
+        modalStars.forEach(star => {
+            star.addEventListener('click', async () => {
+                const val = parseInt(star.dataset.val);
+                setStarDisplay(val);
+                await persistBookField(book, { rating: val });
+                Utils.toast(`Rated ${val} star${val !== 1 ? 's' : ''}.`, 'success');
+            });
+            star.addEventListener('mouseenter', () => {
+                setStarDisplay(parseInt(star.dataset.val));
+            });
+        });
+        starContainer.addEventListener('mouseleave', () => {
+            setStarDisplay(book.rating || 0);
+        });
+
+        ratingGroup.querySelector('#btn-modal-clear-rating').addEventListener('click', async () => {
+            setStarDisplay(0);
+            await persistBookField(book, { rating: 0 });
+            Utils.toast('Rating cleared.', 'info');
+        });
+
+        // ────────────────────────────────────────
+        // 4. Inline Tag Editing
+        // ────────────────────────────────────────
+        const tagSection = document.createElement('div');
+        tagSection.className = 'modal-enrichment-section';
+        tagSection.innerHTML = `
+            <div class="modal-enrichment-label">Tags</div>
+            <div class="modal-tag-list" id="modal-tag-list"></div>
+            <div class="modal-enrichment-row" style="margin-top: 6px;">
+                <input type="text" class="modal-inline-input" id="modal-tag-input"
+                       placeholder="Add tag…" style="flex:1;" maxlength="40">
+                <button class="btn btn-small btn-primary" id="btn-modal-add-tag">+ Add</button>
+            </div>
+        `;
+        actionsEl.appendChild(tagSection);
+
+        function renderInlineTags() {
+            const tagList = tagSection.querySelector('#modal-tag-list');
+            const tags = book.tags || [];
+            if (!tags.length) {
+                tagList.innerHTML = '<span style="font-size: var(--text-xs); color: var(--text-tertiary);">No tags yet</span>';
+                return;
+            }
+            tagList.innerHTML = tags.map((t, i) => `
+                <span class="modal-tag-chip">
+                    ${escapeHtml(t)}
+                    <button class="modal-tag-remove" data-index="${i}" title="Remove tag">✕</button>
+                </span>
+            `).join('');
+
+            tagList.querySelectorAll('.modal-tag-remove').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const idx = parseInt(btn.dataset.index);
+                    const newTags = [...(book.tags || [])];
+                    newTags.splice(idx, 1);
+                    await persistBookField(book, { tags: newTags });
+                    renderInlineTags();
+                    Utils.toast('Tag removed.', 'info');
+                });
+            });
+        }
+        renderInlineTags();
+
+        const tagInput = tagSection.querySelector('#modal-tag-input');
+        const addTagBtn = tagSection.querySelector('#btn-modal-add-tag');
+
+        async function addTag() {
+            const val = tagInput.value.trim();
+            if (!val) return;
+            const newTags = [...new Set([...(book.tags || []), val])];
+            await persistBookField(book, { tags: newTags });
+            tagInput.value = '';
+            renderInlineTags();
+            Utils.toast(`Tag "${val}" added.`, 'success');
+        }
+        addTagBtn.addEventListener('click', addTag);
+        tagInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); addTag(); }
+        });
+
+        // ────────────────────────────────────────
+        // 5. Inline Notes Editing
+        // ────────────────────────────────────────
+        const notesSection = document.createElement('div');
+        notesSection.className = 'modal-enrichment-section';
+        notesSection.innerHTML = `
+            <div class="modal-enrichment-label">Notes</div>
+            <textarea class="modal-inline-textarea" id="modal-notes-input" rows="3"
+                      placeholder="Add notes…">${escapeHtml(book.notes || '')}</textarea>
+            <div style="display: flex; justify-content: flex-end; margin-top: 4px;">
+                <button class="btn btn-small btn-primary" id="btn-modal-save-notes">💾 Save Notes</button>
+            </div>
+        `;
+        actionsEl.appendChild(notesSection);
+
+        notesSection.querySelector('#btn-modal-save-notes').addEventListener('click', async () => {
+            const notes = notesSection.querySelector('#modal-notes-input').value.trim();
+            await persistBookField(book, { notes });
+            descEl.textContent = book.description || notes || '';
+            descEl.style.display = (book.description || notes) ? '' : 'none';
+            Utils.toast('Notes saved.', 'success');
+        });
+
+        // ────────────────────────────────────────
+        // 6. Reading Status Buttons
+        // ────────────────────────────────────────
         const statusGroup = document.createElement('div');
         statusGroup.className = 'modal-status-group';
         statusGroup.innerHTML = `<span class="modal-status-label">Status:</span>`;
@@ -686,7 +1073,9 @@ const LibraryView = (() => {
         }
         actionsEl.appendChild(statusGroup);
 
-        // Shelf assignment
+        // ────────────────────────────────────────
+        // 7. Shelf Assignment
+        // ────────────────────────────────────────
         const shelfGroup = document.createElement('div');
         shelfGroup.className = 'modal-shelf-group';
         const shelves = await DB.getAll(DB.STORES.SHELVES);
@@ -703,29 +1092,140 @@ const LibraryView = (() => {
         shelfGroup.appendChild(shelfSelect);
         actionsEl.appendChild(shelfGroup);
 
-        // Type-specific actions
-        if (book.type === 'physical') {
-            const editDeleteGroup = document.createElement('div');
-            editDeleteGroup.className = 'modal-edit-group';
-            editDeleteGroup.innerHTML = `
-                <button class="btn btn-secondary" id="btn-modal-edit">Edit</button>
-                <button class="btn btn-danger" id="btn-modal-delete">Delete</button>
-            `;
-            actionsEl.appendChild(editDeleteGroup);
+        // ────────────────────────────────────────
+        // 8. External Links
+        // ────────────────────────────────────────
+        const linksGroup = document.createElement('div');
+        linksGroup.className = 'modal-enrichment-row modal-external-links';
+        const searchQuery = encodeURIComponent(book.title + ' ' + book.author);
+        const isbnQuery = book.isbn ? encodeURIComponent(book.isbn) : '';
+        linksGroup.innerHTML = `
+            <span class="modal-status-label">Links:</span>
+            <a class="btn btn-small btn-secondary" href="https://openlibrary.org/search?q=${searchQuery}" target="_blank" rel="noopener" title="Search on Open Library">📚 Open Library</a>
+            <a class="btn btn-small btn-secondary" href="https://www.google.com/search?q=${searchQuery}+book" target="_blank" rel="noopener" title="Search on Google">🔎 Google</a>
+            <a class="btn btn-small btn-secondary" href="https://www.goodreads.com/search?q=${searchQuery}" target="_blank" rel="noopener" title="Search on Goodreads">📖 Goodreads</a>
+            ${book.isbn ? `<a class="btn btn-small btn-secondary" href="https://www.amazon.co.uk/s?k=${isbnQuery}" target="_blank" rel="noopener" title="Search on Amazon">🛒 Amazon</a>` : ''}
+        `;
+        actionsEl.appendChild(linksGroup);
 
-            editDeleteGroup.querySelector('#btn-modal-edit').addEventListener('click', () => {
+        // ────────────────────────────────────────
+        // 9. Edit / Delete (all book types)
+        // ────────────────────────────────────────
+        const editDeleteGroup = document.createElement('div');
+        editDeleteGroup.className = 'modal-edit-group';
+
+        // Physical books get the Full Edit button
+        if (book.type === 'physical') {
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-secondary';
+            editBtn.id = 'btn-modal-edit';
+            editBtn.textContent = '✏️ Full Edit';
+            editBtn.addEventListener('click', () => {
                 PhysicalBooks.openForm(book);
                 overlay.classList.remove('open');
             });
-            editDeleteGroup.querySelector('#btn-modal-delete').addEventListener('click', async () => {
-                if (await PhysicalBooks.deleteBook(book.id)) {
-                    overlay.classList.remove('open');
-                    App.refreshCurrentTab();
-                }
-            });
+            editDeleteGroup.appendChild(editBtn);
         }
 
+        // For merged books with multiple formats, show per-format remove buttons
+        const formatEntries = [];
+        if (book.hasEbook || book.type === 'ebook') formatEntries.push({ type: 'ebook', store: DB.STORES.EBOOKS, label: 'eBook' });
+        if (book.hasAudiobook || book.type === 'audiobook') formatEntries.push({ type: 'audiobook', store: DB.STORES.AUDIOBOOKS, label: 'Audiobook' });
+        if (book.hasPhysical || book.type === 'physical') formatEntries.push({ type: 'physical', store: DB.STORES.PHYSICAL, label: 'Physical' });
+
+        if (formatEntries.length > 1) {
+            // Multiple formats — show individual remove buttons
+            for (const fmt of formatEntries) {
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-small btn-danger';
+                btn.textContent = `🗑 Remove ${fmt.label}`;
+                btn.title = `Remove the ${fmt.label} copy from your library`;
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    if (!confirm(`Remove the ${fmt.label} copy of "${book.title}"?`)) return;
+                    await removeBookFromStore(book, fmt.store);
+                    overlay.classList.remove('open');
+                    App.refreshCurrentTab();
+                    App.updateStats();
+                });
+                editDeleteGroup.appendChild(btn);
+            }
+        }
+
+        // Always show a main Remove / Remove All button
+        const removeAllBtn = document.createElement('button');
+        removeAllBtn.className = 'btn btn-danger';
+        removeAllBtn.id = 'btn-modal-delete';
+        removeAllBtn.textContent = formatEntries.length > 1 ? '🗑 Remove All' : '🗑 Remove Book';
+        removeAllBtn.title = 'Remove this book from your library entirely';
+        removeAllBtn.addEventListener('click', async () => {
+            const msg = formatEntries.length > 1
+                ? `Remove "${book.title}" from ALL formats (${formatEntries.map(f => f.label).join(', ')})?`
+                : `Remove "${book.title}" from your library?`;
+            if (!confirm(msg)) return;
+            await removeBookAllStores(book);
+            overlay.classList.remove('open');
+            App.refreshCurrentTab();
+            App.updateStats();
+        });
+        editDeleteGroup.appendChild(removeAllBtn);
+
+        actionsEl.appendChild(editDeleteGroup);
+
         overlay.classList.add('open');
+    }
+
+    /**
+     * Remove a book from a specific store
+     */
+    async function removeBookFromStore(book, storeName) {
+        const all = await DB.getAll(storeName);
+        const matchKey = Utils.matchKey(book.title, book.author);
+        let removed = 0;
+
+        for (const b of all) {
+            const bKey = Utils.matchKey(b.title, b.author);
+            if (bKey === matchKey || b.id === book.id) {
+                // Clean up cover if it exists
+                if (b.coverId) {
+                    await DB.remove(DB.STORES.COVERS, b.coverId);
+                }
+                await DB.remove(storeName, b.id);
+                removed++;
+            }
+        }
+
+        const storeLabel = storeName === DB.STORES.EBOOKS ? 'eBook'
+            : storeName === DB.STORES.AUDIOBOOKS ? 'Audiobook'
+            : 'Physical';
+        Utils.toast(`${storeLabel} copy removed.`, 'info');
+        return removed;
+    }
+
+    /**
+     * Remove a book from ALL stores (ebooks, audiobooks, physical)
+     */
+    async function removeBookAllStores(book) {
+        const stores = [DB.STORES.EBOOKS, DB.STORES.AUDIOBOOKS, DB.STORES.PHYSICAL];
+        const matchKey = Utils.matchKey(book.title, book.author);
+        let totalRemoved = 0;
+
+        for (const storeName of stores) {
+            const all = await DB.getAll(storeName);
+            for (const b of all) {
+                const bKey = Utils.matchKey(b.title, b.author);
+                if (bKey === matchKey || b.id === book.id) {
+                    if (b.coverId) {
+                        await DB.remove(DB.STORES.COVERS, b.coverId);
+                    }
+                    await DB.remove(storeName, b.id);
+                    totalRemoved++;
+                }
+            }
+        }
+
+        Utils.toast(`"${book.title}" removed from library.`, 'info');
+        return totalRemoved;
     }
 
     /**
@@ -802,3 +1302,4 @@ const LibraryView = (() => {
 
     return { renderShelf, renderWishlist, renderUnified, renderCollection, showDetail, updateBookStatus, updateBookShelf };
 })();
+

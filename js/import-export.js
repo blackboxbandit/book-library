@@ -70,11 +70,37 @@ const ImportExport = (() => {
             const data = Utils.sanitizeImportedObject(JSON.parse(text));
 
             // Validate structure
-            const validStores = ['ebooks', 'audiobooks', 'physical', 'wishlist', 'covers', 'settings'];
+            const validStores = ['ebooks', 'audiobooks', 'physical', 'wishlist', 'covers', 'settings', 'shelves'];
             const hasValidData = validStores.some(s => data[s] && Array.isArray(data[s]));
             if (!hasValidData) {
                 Utils.toast('Invalid library file format.', 'error');
                 return;
+            }
+
+            // Pre-import normalisation pass: fix known-bad data
+            for (const storeName of ['ebooks', 'audiobooks']) {
+                if (!data[storeName] || !Array.isArray(data[storeName])) continue;
+                data[storeName] = data[storeName].map(book => {
+                    // Fix "Audio Books" / bad author values
+                    const cleanAuthor = Utils.fuzzyNormaliseAuthor(book.author || '');
+                    if (!cleanAuthor && book.title) {
+                        // Try to extract author from title
+                        const parsed = Utils.extractAuthorFromTitle(book.title);
+                        if (parsed.author) {
+                            book.title = parsed.title;
+                            book.author = parsed.author;
+                        }
+                    } else if (cleanAuthor !== (book.author || '').trim()) {
+                        book.author = cleanAuthor;
+                    }
+                    // Strip trailing years from titles
+                    book.title = (book.title || '').replace(/\s+\d{4}\s*$/, '').trim();
+                    // Remove format noise from titles
+                    book.title = book.title.replace(/\s+(ePub eBook|epub|ebook)\s*$/i, '').trim();
+                    // Recalculate matchKey
+                    book.matchKey = Utils.matchKey(book.title, book.author);
+                    return book;
+                });
             }
 
             const replace = confirm('Replace existing data? Click "OK" to replace, "Cancel" to merge.');
