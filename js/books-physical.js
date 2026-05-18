@@ -1,72 +1,27 @@
 /* ===== Physical Books Management ===== */
 const PhysicalBooks = (() => {
-    // State
-    let _fetchedCover = null; // Holds a cover fetched from lookup
+    let _lookupAborted = false;
 
     function init() {
         document.getElementById('btn-add-physical').addEventListener('click', () => {
             openForm();
         });
 
-        // Wire up cover suggestions
-        const suggestBtn = document.getElementById('btn-suggest-cover');
-        if (suggestBtn) {
-            suggestBtn.addEventListener('click', handleSuggestCover);
-        }
-    }
+        // Import JSON button
+        document.getElementById('btn-import-physical').addEventListener('click', () => {
+            document.getElementById('physical-file-input').click();
+        });
+        document.getElementById('physical-file-input').addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            await importFromJSON(file);
+            e.target.value = '';
+        });
 
-    async function handleSuggestCover() {
-        const title = document.getElementById('form-title').value;
-        if (!title) {
-            Utils.toast('Please enter a title to search for covers', 'error');
-            return;
-        }
-
-        const btn = document.getElementById('btn-suggest-cover');
-        const container = document.getElementById('cover-suggestions');
-
-        btn.disabled = true;
-        btn.textContent = 'Searching...';
-        container.innerHTML = '';
-
-        try {
-            const covers = await Utils.suggestCovers(title);
-            if (covers && covers.length > 0) {
-                covers.forEach(url => {
-                    const img = document.createElement('img');
-                    img.src = url;
-                    img.style.height = '120px';
-                    img.style.cursor = 'pointer';
-                    img.style.borderRadius = '4px';
-                    img.style.border = '2px solid transparent';
-
-                    img.addEventListener('click', async () => {
-                        // Deselect others
-                        Array.from(container.children).forEach(c => c.style.borderColor = 'transparent');
-                        img.style.borderColor = 'var(--accent)';
-
-                        Utils.toast('Fetching cover...', 'info');
-                        const coverData = await Utils.fetchCoverFromUrl(url);
-                        if (coverData) {
-                            _fetchedCover = coverData;
-                            Utils.toast('Cover selected', 'success');
-                        } else {
-                            Utils.toast('Failed to load cover', 'error');
-                        }
-                    });
-
-                    container.appendChild(img);
-                });
-            } else {
-                container.textContent = 'No covers found.';
-            }
-        } catch (e) {
-            console.error(e);
-            container.textContent = 'Error fetching covers.';
-        } finally {
-            btn.disabled = false;
-            btn.textContent = 'Suggest Cover';
-        }
+        // Lookup All Covers button
+        document.getElementById('btn-lookup-all-physical').addEventListener('click', () => {
+            batchLookupAll();
+        });
     }
 
     function openForm(book = null) {
@@ -99,14 +54,24 @@ const PhysicalBooks = (() => {
             document.getElementById('form-rating').value = book.rating || 0;
             document.getElementById('form-notes').value = book.notes || '';
             document.getElementById('form-reading-status').value = book.readingStatus || 'unread';
-            document.getElementById('form-shelf').value = book.shelf || '';
+
+            // Set checkboxes for shelves
+            const shelves = book.shelves || (book.shelf ? [book.shelf] : []);
+            document.querySelectorAll('#form-shelves input[type="checkbox"]').forEach(cb => {
+                cb.checked = shelves.includes(cb.value);
+            });
+
             updateStarDisplay(book.rating || 0);
         } else {
             document.getElementById('book-form').reset();
             document.getElementById('form-book-id').value = '';
             document.getElementById('form-rating').value = '0';
             document.getElementById('form-reading-status').value = 'unread';
-            document.getElementById('form-shelf').value = '';
+
+            document.querySelectorAll('#form-shelves input[type="checkbox"]').forEach(cb => {
+                cb.checked = false;
+            });
+
             updateStarDisplay(0);
         }
 
@@ -302,7 +267,7 @@ const PhysicalBooks = (() => {
         }
 
         const readingStatus = document.getElementById('form-reading-status').value || 'unread';
-        const shelf = document.getElementById('form-shelf').value || '';
+        const shelves = Array.from(document.querySelectorAll('#form-shelves input[type="checkbox"]:checked')).map(cb => cb.value);
         const now = new Date().toISOString();
 
         const book = {
@@ -318,7 +283,8 @@ const PhysicalBooks = (() => {
             matchKey: Utils.matchKey(formData.title, formData.author),
             dateAdded: isNew ? now : (existing?.dateAdded || now),
             readingStatus,
-            shelf,
+            shelves,
+            shelf: shelves.length > 0 ? shelves[0] : '', // Keep for backward compatibility
             dateStarted: readingStatus === 'reading' ? (existing?.dateStarted || now) : (existing?.dateStarted || null),
             dateCompleted: readingStatus === 'read' ? (existing?.dateCompleted || now) : null
         };
@@ -339,9 +305,211 @@ const PhysicalBooks = (() => {
         return true;
     }
 
-    function getFetchedCover() {
-        return _fetchedCover;
+    /**
+     * Import physical books from a JSON file.
+     * Accepts an array of { title, author, isbn } objects.
+     * Skips duplicates based on matchKey.
+     */
+    async function importFromJSON(file) {
+        try {
+            const text = await Utils.readFileAsText(file);
+            const raw = Utils.sanitizeImportedObject(JSON.parse(text));
+
+            // Accept both a bare array or an object with a "books" key
+            const items = Array.isArray(raw) ? raw : (Array.isArray(raw.books) ? raw.books : null);
+            if (!items || !items.length) {
+                Utils.toast('No books found in the file. Expected a JSON array of { title, author }.', 'error');
+                return;
+            }
+
+            // Get existing match keys for dedup
+            const existingKeys = await DB.getMatchKeys(DB.STORES.PHYSICAL);
+            const now = new Date().toISOString();
+            let added = 0;
+            let skipped = 0;
+
+            const booksToAdd = [];
+            for (const item of items) {
+                const title = (item.title || '').trim();
+                const author = (item.author || '').trim();
+                if (!title) { skipped++; continue; }
+
+                const key = Utils.matchKey(title, author);
+                if (existingKeys.has(key)) {
+                    skipped++;
+                    continue;
+                }
+
+                // Mark as seen so we don't add duplicates within the same import
+                existingKeys.add(key);
+
+                const id = Utils.generateId();
+                booksToAdd.push({
+                    id,
+                    type: 'physical',
+                    title,
+                    author,
+                    isbn: (item.isbn || '').toString().trim(),
+                    tags: [],
+                    rating: 0,
+                    notes: '',
+                    coverId: null,
+                    matchKey: key,
+                    dateAdded: now,
+                    readingStatus: 'unread',
+                    shelf: '',
+                    dateStarted: null,
+                    dateCompleted: null
+                });
+                added++;
+            }
+
+            if (booksToAdd.length) {
+                await DB.putMany(DB.STORES.PHYSICAL, booksToAdd);
+            }
+
+            Utils.toast(`Imported ${added} book${added !== 1 ? 's' : ''}${skipped ? ` (${skipped} skipped as duplicates)` : ''}.`, 'success');
+
+            if (typeof App !== 'undefined') {
+                App.refreshCurrentTab();
+                App.updateStats();
+            }
+        } catch (err) {
+            console.error('Physical books import error:', err);
+            Utils.toast('Import failed: ' + err.message, 'error');
+        }
     }
 
-    return { init, openForm, saveBook, deleteBook, updateStarDisplay, lookupBook, getFetchedCover };
+    /**
+     * Batch lookup ISBNs and cover art for all physical books missing them.
+     * Uses Open Library search API. Rate-limited to ~1 request per second
+     * to avoid throttling.
+     */
+    async function batchLookupAll() {
+        const books = await DB.getAll(DB.STORES.PHYSICAL);
+        // Only process books that need data
+        const needsLookup = books.filter(b => !b.isbn || !b.coverId);
+
+        if (!needsLookup.length) {
+            Utils.toast('All books already have ISBNs and covers!', 'success');
+            return;
+        }
+
+        const confirmed = confirm(
+            `Look up ${needsLookup.length} book${needsLookup.length !== 1 ? 's' : ''} on Open Library?\n\n` +
+            `This will search for ISBNs and cover art for books missing them. ` +
+            `It may take a few minutes due to API rate limiting.\n\n` +
+            `You can close this tab to cancel at any time.`
+        );
+        if (!confirmed) return;
+
+        _lookupAborted = false;
+
+        // Show progress bar
+        const progressEl = document.getElementById('physical-lookup-progress');
+        const fillEl = document.getElementById('physical-progress-fill');
+        const textEl = document.getElementById('physical-progress-text');
+        const lookupBtn = document.getElementById('btn-lookup-all-physical');
+
+        progressEl.hidden = false;
+        lookupBtn.disabled = true;
+        lookupBtn.textContent = '⏳ Looking up…';
+
+        let found = 0;
+        let notFound = 0;
+        let errors = 0;
+
+        for (let i = 0; i < needsLookup.length; i++) {
+            if (_lookupAborted) break;
+
+            const book = needsLookup[i];
+            const pct = Math.round(((i + 1) / needsLookup.length) * 100);
+            fillEl.style.width = pct + '%';
+            textEl.textContent = `Looking up "${book.title}" (${i + 1}/${needsLookup.length})…`;
+
+            try {
+                // Search by title + author
+                const query = [book.title, book.author].filter(Boolean).join(' ');
+                const results = await Utils.searchBooks(query);
+
+                if (results && results.length) {
+                    const best = results[0];
+                    let updated = false;
+
+                    // Update ISBN if missing
+                    if (!book.isbn && best.isbn) {
+                        book.isbn = best.isbn;
+                        updated = true;
+                    }
+
+                    // Update tags if missing
+                    if ((!book.tags || !book.tags.length) && best.tags && best.tags.length) {
+                        book.tags = best.tags;
+                        updated = true;
+                    }
+
+                    // Fetch cover if missing
+                    if (!book.coverId && best.coverUrl && Utils.isValidUrl(best.coverUrl)) {
+                        try {
+                            const coverData = await Utils.fetchCoverFromUrl(best.coverUrl);
+                            if (coverData) {
+                                const coverId = 'cover_' + book.id;
+                                await DB.saveCover(coverId, coverData);
+                                book.coverId = coverId;
+                                updated = true;
+                            }
+                        } catch {
+                            // Cover fetch is best-effort
+                        }
+                    }
+
+                    if (updated) {
+                        book.matchKey = Utils.matchKey(book.title, book.author);
+                        await DB.put(DB.STORES.PHYSICAL, book);
+                        found++;
+                    } else {
+                        notFound++;
+                    }
+                } else {
+                    notFound++;
+                }
+            } catch (err) {
+                console.warn(`Lookup failed for "${book.title}":`, err.message || err);
+                errors++;
+            }
+
+            // Rate limit: wait 1.2s between requests to avoid Open Library throttling
+            if (i < needsLookup.length - 1 && !_lookupAborted) {
+                await new Promise(r => setTimeout(r, 1200));
+            }
+        }
+
+        // Complete
+        fillEl.style.width = '100%';
+        textEl.textContent = `Done! ${found} enriched, ${notFound} not found, ${errors} errors.`;
+        lookupBtn.disabled = false;
+        lookupBtn.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="7" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            Lookup All Covers`;
+
+        Utils.toast(
+            `Lookup complete: ${found} enriched, ${notFound} not found${errors ? `, ${errors} errors` : ''}.`,
+            found > 0 ? 'success' : 'info'
+        );
+
+        // Hide progress after a delay
+        setTimeout(() => { progressEl.hidden = true; }, 5000);
+
+        // Refresh the view
+        if (typeof App !== 'undefined') {
+            App.refreshCurrentTab();
+            App.updateStats();
+        }
+    }
+
+    return { init, openForm, saveBook, deleteBook, updateStarDisplay, lookupBook, importFromJSON, batchLookupAll };
 })();
