@@ -2,7 +2,9 @@
 
 .book-card {
     position: relative;
-    width: var(--book-width);
+    width: 100%;
+    max-width: 200px;
+    aspect-ratio: 2 / 3;
     cursor: pointer;
     perspective: 800px;
     transition: transform var(--duration-normal) var(--ease-out),

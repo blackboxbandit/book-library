@@ -40,6 +40,10 @@ const PhysicalBooks = (() => {
             lookupResults.innerHTML = '';
             lookupResults.hidden = true;
         }
+        _fetchedCover = null;
+
+        const container = document.getElementById('cover-suggestions');
+        if (container) container.innerHTML = '';
 
         if (book) {
             document.getElementById('form-book-id').value = book.id;
@@ -72,7 +76,7 @@ const PhysicalBooks = (() => {
         }
 
         // Clear any previously fetched cover
-        let _fetchedCover = null;
+        _fetchedCover = null;
 
         overlay.classList.add('open');
     }
