@@ -5,7 +5,7 @@
     position: sticky;
     top: 0;
     z-index: var(--z-header);
-    background: var(--glass-bg);
+    background: rgba(10, 10, 10, 0.82);
     backdrop-filter: saturate(180%) blur(20px);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     border-bottom: 1px solid var(--separator);
@@ -133,12 +133,6 @@
     gap: var(--space-sm);
     flex-wrap: wrap;
     flex: 1;
-    background: rgba(255, 255, 255, 0.02);
-    padding: var(--space-sm);
-    border-radius: var(--radius-lg);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid var(--glass-border);
 }
 
 /* Tab Sections */
@@ -166,19 +160,16 @@
     position: relative;
     display: flex;
     align-items: center;
-    background: rgba(255, 255, 255, 0.04);
-    border-radius: var(--radius-full);
-    border: 1px solid var(--glass-border);
-    box-shadow: 0 1px 2px inset rgba(0,0,0,0.2);
+    background: var(--bg-tertiary);
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
     transition: border-color var(--duration-fast) var(--ease-out),
-        background var(--duration-fast) var(--ease-out),
-        box-shadow var(--duration-fast) var(--ease-out);
+        background var(--duration-fast) var(--ease-out);
 }
 
 .search-box:focus-within {
     border-color: var(--accent);
-    background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 0 0 3px var(--accent-muted);
+    background: var(--bg-secondary);
 }
 
 .search-icon {
@@ -224,30 +215,30 @@
 select {
     appearance: none;
     -webkit-appearance: none;
-    background: rgba(255, 255, 255, 0.04) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a1a1a6' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 10px center;
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-full);
+    background: rgba(43, 29, 14, 0.6) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23d4af37' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 10px center;
+    border: 1px solid rgba(212, 175, 55, 0.3);
+    border-radius: var(--radius-sm);
     padding: 7px 32px 7px 12px;
-    color: var(--text-primary);
+    color: rgba(255, 240, 220, 0.9);
     font-size: var(--text-sm);
     font-weight: var(--weight-medium);
     cursor: pointer;
-    box-shadow: 0 1px 2px inset rgba(0,0,0,0.2);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.5), 0 1px 0 rgba(255,255,255,0.1);
     transition: all var(--duration-fast) var(--ease-out);
 }
 
 .filter-group select:focus,
 select:focus {
     outline: none;
-    border-color: var(--accent);
-    background-color: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 0 0 3px var(--accent-muted);
+    border-color: #d4af37;
+    background-color: rgba(60, 40, 20, 0.8);
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
 }
 
 .filter-group select:hover,
 select:hover {
-    border-color: rgba(255, 255, 255, 0.12);
-    background-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(212, 175, 55, 0.6);
+    background-color: rgba(50, 35, 18, 0.7);
 }
 
 /* Buttons */
@@ -255,9 +246,9 @@ select:hover {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 16px;
+    padding: 7px 14px;
     border: none;
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-sm);
     font-size: var(--text-sm);
     font-weight: var(--weight-medium);
     cursor: pointer;
@@ -277,15 +268,13 @@ select:hover {
 }
 
 .btn-secondary {
-    background: rgba(255, 255, 255, 0.08);
-    color: var(--text-primary);
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
     border: 1px solid var(--glass-border);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
 }
 
 .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.12);
+    background: var(--bg-elevated);
     color: var(--text-primary);
 }
 
@@ -325,12 +314,10 @@ select:hover {
 }
 
 .modal {
-    background: var(--glass-bg);
-    backdrop-filter: saturate(180%) blur(var(--glass-blur));
-    -webkit-backdrop-filter: saturate(180%) blur(var(--glass-blur));
+    background: var(--bg-secondary);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-lg), 0 0 0 1px inset var(--glass-highlight);
+    box-shadow: var(--shadow-lg);
     max-width: 680px;
     width: 100%;
     position: relative;
@@ -481,11 +468,11 @@ select:hover {
 .modal-shelf-select {
     appearance: none;
     -webkit-appearance: none;
-    background: rgba(255, 255, 255, 0.04) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23a1a1a6' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 10px center;
+    background: var(--bg-tertiary) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236e6e73' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 10px center;
     border: 1px solid var(--glass-border);
-    border-radius: var(--radius-full);
+    border-radius: var(--radius-sm);
     padding: 6px 32px 6px 12px;
-    color: var(--text-primary);
+    color: var(--text-secondary);
     font-size: var(--text-sm);
     cursor: pointer;
     transition: border-color var(--duration-fast) var(--ease-out);
@@ -495,8 +482,6 @@ select:hover {
 .modal-shelf-select:focus {
     outline: none;
     border-color: var(--accent);
-    background-color: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 0 0 3px var(--accent-muted);
 }
 
 /* ===== Shelf Manager (Settings) ===== */
@@ -580,24 +565,19 @@ select:hover {
 .form-group input,
 .form-group textarea,
 .form-group select {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--radius-md);
-    padding: 10px 14px;
+    background: var(--bg-tertiary);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
     color: var(--text-primary);
     outline: none;
-    transition: border-color var(--duration-fast) var(--ease-out),
-                box-shadow var(--duration-fast) var(--ease-out);
+    transition: border-color var(--duration-fast) var(--ease-out);
     font-size: var(--text-sm);
-    box-shadow: 0 1px 2px inset rgba(0,0,0,0.1);
 }
 
 .form-group input:focus,
-.form-group textarea:focus,
-.form-group select:focus {
+.form-group textarea:focus {
     border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-muted);
-    background: rgba(255, 255, 255, 0.08);
 }
 
 .form-actions {
@@ -616,12 +596,10 @@ select:hover {
 }
 
 .settings-card {
-    background: rgba(255, 255, 255, 0.02);
+    background: var(--bg-secondary);
     border-radius: var(--radius-lg);
     padding: var(--space-lg);
     border: 1px solid var(--glass-border);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
 }
 
 .settings-card h3 {
