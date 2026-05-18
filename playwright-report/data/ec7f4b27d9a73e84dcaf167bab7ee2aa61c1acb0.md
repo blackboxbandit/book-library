@@ -1,0 +1,464 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - img [ref=e6]
+        - heading "Book Library" [level=1] [ref=e9]
+      - tablist [ref=e10]:
+        - tab "Library" [active] [selected] [ref=e11] [cursor=pointer]:
+          - img [ref=e13]
+          - generic [ref=e18]: Library
+        - tab "eBooks" [ref=e19] [cursor=pointer]:
+          - img [ref=e21]
+          - generic [ref=e23]: eBooks
+        - tab "Audiobooks" [ref=e24] [cursor=pointer]:
+          - img [ref=e26]
+          - generic [ref=e30]: Audiobooks
+        - tab "Physical" [ref=e31] [cursor=pointer]:
+          - img [ref=e33]
+          - generic [ref=e36]: Physical
+        - tab "Wishlist" [ref=e37] [cursor=pointer]:
+          - img [ref=e39]
+          - generic [ref=e41]: Wishlist
+        - tab "Settings" [ref=e42] [cursor=pointer]:
+          - img [ref=e44]
+          - generic [ref=e48]: Settings
+  - main [ref=e49]:
+    - tabpanel [ref=e50]:
+      - generic [ref=e51]:
+        - heading "My Library" [level=2] [ref=e52]
+        - generic [ref=e53]:
+          - generic [ref=e54]:
+            - generic:
+              - img
+            - searchbox "Search your library…" [ref=e55]
+          - generic [ref=e56]:
+            - combobox [ref=e57] [cursor=pointer]:
+              - option "Sort by Title" [selected]
+              - option "Sort by Author"
+              - option "Sort by Date Added"
+              - option "Sort by Rating"
+            - combobox [ref=e58] [cursor=pointer]:
+              - option "All Formats" [selected]
+              - option "eBooks Only"
+              - option "Audiobooks Only"
+              - option "Physical Only"
+            - combobox [ref=e59] [cursor=pointer]:
+              - option "All Status" [selected]
+              - option "Unread"
+              - option "Currently Reading"
+              - option "Read"
+            - combobox [ref=e60] [cursor=pointer]:
+              - option "No Grouping" [selected]
+              - option "Group by Shelf"
+              - option "Group by Genre"
+              - option "Group by Author"
+              - option "Group by Status"
+            - combobox [ref=e61] [cursor=pointer]:
+              - option "All Shelves" [selected]
+      - generic [ref=e62]:
+        - generic [ref=e63]:
+          - generic [ref=e64] [cursor=pointer]:
+            - generic [ref=e66]:
+              - img [ref=e68]
+              - generic [ref=e70]: 788 Unspoken Rules
+              - generic [ref=e71]: HBR IdeaCast
+            - generic [ref=e72]:
+              - generic [ref=e73]: 788 Unspoken Rules
+              - generic [ref=e74]: HBR IdeaCast
+            - generic [ref=e76]:
+              - img [ref=e78]
+              - text: eBook
+          - generic [ref=e80] [cursor=pointer]:
+            - img "Antifragile" [ref=e82]
+            - generic [ref=e83]:
+              - generic [ref=e84]: Antifragile
+              - generic [ref=e85]: Nassim Taleb
+            - generic [ref=e87]:
+              - img [ref=e89]
+              - text: eBook
+          - generic [ref=e91] [cursor=pointer]:
+            - img "at Work" [ref=e93]
+            - generic [ref=e94]:
+              - generic [ref=e95]: at Work
+              - generic [ref=e96]: The Unconscious
+            - generic [ref=e98]:
+              - img [ref=e100]
+              - text: eBook
+          - generic [ref=e102] [cursor=pointer]:
+            - 'img "Atomic Habits: Tiny Changes, Remarkable Results: An Easy & Proven Way to Build Good Habits & Break Bad Ones" [ref=e104]'
+            - generic [ref=e105]:
+              - generic [ref=e106]: "Atomic Habits: Tiny Changes, Remarkable Results: An Easy & Proven Way to Build Good Habits & Break Bad Ones"
+              - generic [ref=e107]: James Clear
+            - generic [ref=e109]:
+              - img [ref=e111]
+              - text: eBook
+          - generic [ref=e113] [cursor=pointer]:
+            - 'img "Body Language: The Essential Guide on How to Analyze, Influence, Read & Persuade People Using Proven Strategies" [ref=e115]'
+            - generic [ref=e116]:
+              - generic [ref=e117]: "Body Language: The Essential Guide on How to Analyze, Influence, Read & Persuade People Using Proven Strategies"
+              - generic [ref=e118]: Tom Anderson
+            - generic [ref=e120]:
+              - img [ref=e122]
+              - text: Audio
+          - generic [ref=e126] [cursor=pointer]:
+            - 'img "Boom and Bust: A Global History of Financial Bubbles" [ref=e128]'
+            - generic [ref=e129]:
+              - generic [ref=e130]: "Boom and Bust: A Global History of Financial Bubbles"
+              - generic [ref=e131]: William Quinn, John D. Turner
+            - generic [ref=e133]:
+              - img [ref=e135]
+              - text: eBook
+        - generic [ref=e137]:
+          - generic [ref=e138] [cursor=pointer]:
+            - 'img "Built on a Lie: The Rise and Fall of Neil Woodford and the Fate of Middle England’s Money" [ref=e140]'
+            - generic [ref=e141]:
+              - generic [ref=e142]: "Built on a Lie: The Rise and Fall of Neil Woodford and the Fate of Middle England’s Money"
+              - generic [ref=e143]: Owen Walker
+            - generic [ref=e145]:
+              - img [ref=e147]
+              - text: eBook
+          - generic [ref=e149] [cursor=pointer]:
+            - 'img "Business Strategy: The Economist" [ref=e151]'
+            - generic [ref=e152]:
+              - generic [ref=e153]: "Business Strategy: The Economist"
+              - generic [ref=e154]: Jeremy Kourdi
+            - generic [ref=e156]:
+              - img [ref=e158]
+              - text: Audio
+          - generic [ref=e162] [cursor=pointer]:
+            - 'img "Caffeine: How Caffeine Created the Modern World" [ref=e164]'
+            - generic [ref=e165]:
+              - generic [ref=e166]: "Caffeine: How Caffeine Created the Modern World"
+              - generic [ref=e167]: Michael Pollan
+            - generic [ref=e169]:
+              - img [ref=e171]
+              - text: Audio
+          - generic [ref=e175] [cursor=pointer]:
+            - img "Calculus Made Easy" [ref=e177]
+            - generic [ref=e178]:
+              - generic [ref=e179]: Calculus Made Easy
+              - generic [ref=e180]: Silvanus Thompson
+            - generic [ref=e182]:
+              - img [ref=e184]
+              - text: eBook
+          - generic [ref=e186] [cursor=pointer]:
+            - img "Calibre Quick Start Guide" [ref=e188]
+            - generic [ref=e189]:
+              - generic [ref=e190]: Calibre Quick Start Guide
+              - generic [ref=e191]: John Schember
+            - generic [ref=e193]:
+              - img [ref=e195]
+              - text: eBook
+          - generic [ref=e197] [cursor=pointer]:
+            - 'img "Chapter 3: Critical Perspectives on Leadership" [ref=e199]'
+            - generic [ref=e200]:
+              - generic [ref=e201]: "Chapter 3: Critical Perspectives on Leadership"
+              - generic [ref=e202]: Oxford Handbook
+            - generic [ref=e204]:
+              - img [ref=e206]
+              - text: eBook
+        - generic [ref=e208]:
+          - generic [ref=e209] [cursor=pointer]:
+            - img "Clason The Richest Man in Babylon" [ref=e211]
+            - generic [ref=e212]:
+              - generic [ref=e213]: Clason The Richest Man in Babylon
+              - generic [ref=e214]: George S
+            - generic [ref=e216]:
+              - img [ref=e218]
+              - text: Audio
+          - generic [ref=e222] [cursor=pointer]:
+            - img "Cover ReflexiveLeadershipIn" [ref=e224]
+            - generic [ref=e225]:
+              - generic [ref=e226]: Cover ReflexiveLeadershipIn
+              - generic [ref=e227]: PaulEvans 2021
+            - generic [ref=e229]:
+              - img [ref=e231]
+              - text: eBook
+          - generic [ref=e233] [cursor=pointer]:
+            - img "Do Epic Shit" [ref=e235]
+            - generic [ref=e236]:
+              - generic [ref=e237]: Do Epic Shit
+              - generic [ref=e238]: Ankur Warikoo
+            - generic [ref=e240]:
+              - img [ref=e242]
+              - text: Audio
+          - generic [ref=e246] [cursor=pointer]:
+            - img "DoD Enterprise DevSecOps Reference Design v1.0 Public Release (1)" [ref=e248]
+            - generic [ref=e249]:
+              - generic [ref=e250]: DoD Enterprise DevSecOps Reference Design v1.0 Public Release (1)
+              - generic [ref=e251]: Ma, Jamie
+            - generic [ref=e253]:
+              - img [ref=e255]
+              - text: eBook
+          - generic [ref=e257] [cursor=pointer]:
+            - img "doi:10.1016/j.leaqua.2004.09.003" [ref=e259]
+            - generic [ref=e260]:
+              - generic [ref=e261]: doi:10.1016/j.leaqua.2004.09.003
+              - generic [ref=e262]: Unknown
+            - generic [ref=e264]:
+              - img [ref=e266]
+              - text: eBook
+          - generic [ref=e268] [cursor=pointer]:
+            - 'img "Don''t Bullsh*t Yourself!: Crush the Excuses That Are Holding You Back" [ref=e270]'
+            - generic [ref=e271]:
+              - generic [ref=e272]: "Don't Bullsh*t Yourself!: Crush the Excuses That Are Holding You Back"
+              - generic [ref=e273]: Jon Taffer
+            - generic [ref=e275]:
+              - img [ref=e277]
+              - text: eBook
+        - generic [ref=e279]:
+          - generic [ref=e280] [cursor=pointer]:
+            - img "ECONOMIC INDICATORS, Sixth Edition" [ref=e282]
+            - generic [ref=e283]:
+              - generic [ref=e284]: ECONOMIC INDICATORS, Sixth Edition
+              - generic [ref=e285]: GUIDE TO
+            - generic [ref=e287]:
+              - img [ref=e289]
+              - text: eBook
+          - generic [ref=e291] [cursor=pointer]:
+            - 'img "Economics: Making sense of the Modern Economy: The Economist" [ref=e293]'
+            - generic [ref=e294]:
+              - generic [ref=e295]: "Economics: Making sense of the Modern Economy: The Economist"
+              - generic [ref=e296]: Saguao Datta
+            - generic [ref=e298]:
+              - img [ref=e300]
+              - text: Audio
+          - generic [ref=e304] [cursor=pointer]:
+            - 'img "Emotional Intelligence: A Practical Guide for Personal Growth and Building Stronger Connections (Fostering Personal Development)" [ref=e306]'
+            - generic [ref=e307]:
+              - generic [ref=e308]: "Emotional Intelligence: A Practical Guide for Personal Growth and Building Stronger Connections (Fostering Personal Development)"
+              - generic [ref=e309]: Amy Harper
+            - generic [ref=e311]:
+              - img [ref=e313]
+              - text: Audio
+          - generic [ref=e317] [cursor=pointer]:
+            - 'img "Falk What We Value: The Neuroscience of Choice and Change" [ref=e319]'
+            - generic [ref=e320]:
+              - generic [ref=e321]: "Falk What We Value: The Neuroscience of Choice and Change"
+              - generic [ref=e322]: Dr Emily
+            - generic [ref=e324]:
+              - img [ref=e326]
+              - text: Audio
+          - generic [ref=e330] [cursor=pointer]:
+            - 'img "Financial Intelligence for IT Professionals: What You Really Need to Know About the Numbers" [ref=e332]'
+            - generic [ref=e333]:
+              - generic [ref=e334]: "Financial Intelligence for IT Professionals: What You Really Need to Know About the Numbers"
+              - generic [ref=e335]: Karen Berman, Joe Knight, John Case
+            - generic [ref=e337]:
+              - img [ref=e339]
+              - text: eBook
+          - generic [ref=e341] [cursor=pointer]:
+            - img "Financial Times Guide to Banking, The (The FT Guides)" [ref=e343]
+            - generic [ref=e344]:
+              - generic [ref=e345]: Financial Times Guide to Banking, The (The FT Guides)
+              - generic [ref=e346]: Glen Arnold
+            - generic [ref=e348]:
+              - img [ref=e350]
+              - text: eBook
+        - generic [ref=e352]:
+          - generic [ref=e353] [cursor=pointer]:
+            - img "Financial Times Guide to Business Coaching, The (Financial Times Series)" [ref=e355]
+            - generic [ref=e356]:
+              - generic [ref=e357]: Financial Times Guide to Business Coaching, The (Financial Times Series)
+              - generic [ref=e358]: Anne Scoular
+            - generic [ref=e360]:
+              - img [ref=e362]
+              - text: eBook
+          - generic [ref=e364] [cursor=pointer]:
+            - img "Financial Times Guide to How the Stock Market Really Works, The (Financial Times Guides)" [ref=e366]
+            - generic [ref=e367]:
+              - generic [ref=e368]: Financial Times Guide to How the Stock Market Really Works, The (Financial Times Guides)
+              - generic [ref=e369]: Leo Gough
+            - generic [ref=e371]:
+              - img [ref=e373]
+              - text: eBook
+          - generic [ref=e375] [cursor=pointer]:
+            - 'img "Financial Times Guide to Investment Trusts ePub eBook: Unlocking the City''s Best Kept Secret" [ref=e377]'
+            - generic [ref=e378]:
+              - generic [ref=e379]: "Financial Times Guide to Investment Trusts ePub eBook: Unlocking the City's Best Kept Secret"
+              - generic [ref=e380]: John C Baron
+            - generic [ref=e382]:
+              - img [ref=e384]
+              - text: eBook
+          - generic [ref=e386] [cursor=pointer]:
+            - img "Financial Times Guide to Making the Right Investment Decisions, The (The FT Guides)" [ref=e388]
+            - generic [ref=e389]:
+              - generic [ref=e390]: Financial Times Guide to Making the Right Investment Decisions, The (The FT Guides)
+              - generic [ref=e391]: Michael Cahill
+            - generic [ref=e393]:
+              - img [ref=e395]
+              - text: eBook
+          - generic [ref=e397] [cursor=pointer]:
+            - img "Financial Times Guide to Understanding Finance, The (Financial Times Guides)" [ref=e399]
+            - generic [ref=e400]:
+              - generic [ref=e401]: Financial Times Guide to Understanding Finance, The (Financial Times Guides)
+              - generic [ref=e402]: Javier Estrada
+            - generic [ref=e404]:
+              - img [ref=e406]
+              - text: eBook
+          - generic [ref=e408] [cursor=pointer]:
+            - img "Fooled by Randomness" [ref=e410]
+            - generic [ref=e411]:
+              - generic [ref=e412]: Fooled by Randomness
+              - generic [ref=e413]: Nassim Taleb
+            - generic [ref=e415]:
+              - img [ref=e417]
+              - text: eBook
+        - generic [ref=e419]:
+          - generic [ref=e420] [cursor=pointer]:
+            - img "FT Guide to Finance for Non-Financial Managers" [ref=e422]
+            - generic [ref=e423]:
+              - generic [ref=e424]: FT Guide to Finance for Non-Financial Managers
+              - generic [ref=e425]: Jo Haigh
+            - generic [ref=e427]:
+              - img [ref=e429]
+              - text: eBook
+          - generic [ref=e431] [cursor=pointer]:
+            - img "FT Guide to Social Media Strategy" [ref=e433]
+            - generic [ref=e434]:
+              - generic [ref=e435]: FT Guide to Social Media Strategy
+              - generic [ref=e436]: Martin Thomas
+            - generic [ref=e438]:
+              - img [ref=e440]
+              - text: eBook
+          - generic [ref=e442] [cursor=pointer]:
+            - img "Games People Play" [ref=e444]
+            - generic [ref=e445]:
+              - generic [ref=e446]: Games People Play
+              - generic [ref=e447]: Eric Berne
+            - generic [ref=e449]:
+              - img [ref=e451]
+              - text: eBook
+          - generic [ref=e453] [cursor=pointer]:
+            - 'img "Give and Take: Why Helping Others Drives Our Success" [ref=e455]'
+            - generic [ref=e456]:
+              - generic [ref=e457]: "Give and Take: Why Helping Others Drives Our Success"
+              - generic [ref=e458]: Adam Grant
+            - generic [ref=e460]:
+              - img [ref=e462]
+              - text: eBook
+          - generic [ref=e464] [cursor=pointer]:
+            - 'img "Guide to Financial Markets (6th edition): The Economist" [ref=e466]'
+            - generic [ref=e467]:
+              - generic [ref=e468]: "Guide to Financial Markets (6th edition): The Economist"
+              - generic [ref=e469]: Marc Levinson
+            - generic [ref=e471]:
+              - img [ref=e473]
+              - text: Audio
+          - generic [ref=e477] [cursor=pointer]:
+            - 'img "Guide to Investment Strategy (3rd edition): The Economist" [ref=e479]'
+            - generic [ref=e480]:
+              - generic [ref=e481]: "Guide to Investment Strategy (3rd edition): The Economist"
+              - generic [ref=e482]: Peter Stanyer
+            - generic [ref=e484]:
+              - img [ref=e486]
+              - text: Audio
+        - generic [ref=e490]:
+          - generic [ref=e491] [cursor=pointer]:
+            - 'img "Guide to Management Ideas and Gurus: The Economist" [ref=e493]'
+            - generic [ref=e494]:
+              - generic [ref=e495]: "Guide to Management Ideas and Gurus: The Economist"
+              - generic [ref=e496]: Tim Hindle
+            - generic [ref=e498]:
+              - img [ref=e500]
+              - text: Audio
+          - generic [ref=e504] [cursor=pointer]:
+            - 'img "Harry Potter and the Order of the Phoenix: #5 [Large Print]" [ref=e506]'
+            - generic [ref=e507]:
+              - generic [ref=e508]: "Harry Potter and the Order of the Phoenix: #5 [Large Print]"
+              - generic [ref=e509]: J. K. Rowling
+            - generic [ref=e511]:
+              - img [ref=e513]
+              - text: eBook
+          - generic [ref=e515] [cursor=pointer]:
+            - img "HBR Guide to Being a Great Boss" [ref=e517]
+            - generic [ref=e518]:
+              - generic [ref=e519]: HBR Guide to Being a Great Boss
+              - generic [ref=e520]: Harvard Business Review
+            - generic [ref=e522]:
+              - img [ref=e524]
+              - text: Audio
+          - generic [ref=e528] [cursor=pointer]:
+            - img "HBR Guide to Getting the Mentoring You Need" [ref=e530]
+            - generic [ref=e531]:
+              - generic [ref=e532]: HBR Guide to Getting the Mentoring You Need
+              - generic [ref=e533]: Harvard Business School Publishing
+            - generic [ref=e535]:
+              - img [ref=e537]
+              - text: eBook
+          - generic [ref=e539] [cursor=pointer]:
+            - 'img "HBR''s 10 Must Reads 2023: The Definitive Management Ideas of the Year From Harvard Business Review (With Bonus Article \"Persuading the Unpersuadable\" by Adam Grant)" [ref=e541]'
+            - generic [ref=e542]:
+              - generic [ref=e543]: "HBR's 10 Must Reads 2023: The Definitive Management Ideas of the Year From Harvard Business Review (With Bonus Article \"Persuading the Unpersuadable\" by Adam Grant)"
+              - generic [ref=e544]: Harvard Business Review, Adam M. Grant, Francesca Gino, Fred Reichheld, Linda A. Hill
+            - generic [ref=e546]:
+              - img [ref=e548]
+              - text: eBook
+          - generic [ref=e550] [cursor=pointer]:
+            - generic [ref=e552]:
+              - img [ref=e554]
+              - generic [ref=e558]: "HBR's 10 Must Reads: The Essentials: HBR's 10 Must Reads Series"
+              - generic [ref=e559]: Harvard Business Review
+            - generic [ref=e560]:
+              - generic [ref=e561]: "HBR's 10 Must Reads: The Essentials: HBR's 10 Must Reads Series"
+              - generic [ref=e562]: Harvard Business Review
+            - generic [ref=e564]:
+              - img [ref=e566]
+              - text: Audio
+        - generic [ref=e570]:
+          - generic [ref=e571] [cursor=pointer]:
+            - 'img "How Big Things Get Done: The Surprising Factors Behind Every Successful Project, from Home Renovations to Space Exploration" [ref=e573]'
+            - generic [ref=e574]:
+              - generic [ref=e575]: "How Big Things Get Done: The Surprising Factors Behind Every Successful Project, from Home Renovations to Space Exploration"
+              - generic [ref=e576]: Bent Flyvbjerg, Dan Gardner
+            - generic [ref=e578]:
+              - img [ref=e580]
+              - text: eBook
+          - generic [ref=e582] [cursor=pointer]:
+            - 'img "How Boards Work: And How They Can Work Better in a Chaotic World" [ref=e584]'
+            - generic [ref=e585]:
+              - generic [ref=e586]: "How Boards Work: And How They Can Work Better in a Chaotic World"
+              - generic [ref=e587]: Dambisa Moyo
+            - generic [ref=e589]:
+              - img [ref=e591]
+              - text: eBook
+          - generic [ref=e593] [cursor=pointer]:
+            - 'img "How Countries Go Broke: The Big Cycle" [ref=e595]'
+            - generic [ref=e596]:
+              - generic [ref=e597]: "How Countries Go Broke: The Big Cycle"
+              - generic [ref=e598]: Ray Dalio
+            - generic [ref=e600]:
+              - img [ref=e602]
+              - text: eBook
+          - generic [ref=e604] [cursor=pointer]:
+            - img "How to Become a More Effective Leader" [ref=e606]
+            - generic [ref=e607]:
+              - generic [ref=e608]: How to Become a More Effective Leader
+              - generic [ref=e609]: Harvard Business School Online
+            - generic [ref=e611]:
+              - img [ref=e613]
+              - text: eBook
+          - generic [ref=e615] [cursor=pointer]:
+            - img "How To Make Six Figures in Stocks V2" [ref=e617]
+            - generic [ref=e618]:
+              - generic [ref=e619]: How To Make Six Figures in Stocks V2
+              - generic [ref=e620]: Mary Vaughan
+            - generic [ref=e622]:
+              - img [ref=e624]
+              - text: eBook
+          - generic [ref=e626] [cursor=pointer]:
+            - 'img "How to Talk to Anyone: Healthy Approach to Raise Confidence and Charisma, to Improve Communication and Social Skills, and to Master Small Talk (Make Real Friends and Build Meaningful Relationships)" [ref=e628]'
+            - generic [ref=e629]:
+              - generic [ref=e630]: "How to Talk to Anyone: Healthy Approach to Raise Confidence and Charisma, to Improve Communication and Social Skills, and to Master Small Talk (Make Real Friends and Build Meaningful Relationships)"
+              - generic [ref=e631]: Paul Newcomer
+            - generic [ref=e633]:
+              - img [ref=e635]
+              - text: eBook
+  - generic [ref=e637]:
+    - generic [ref=e638]: All data cleared.
+    - generic [ref=e639]: Imported! 127 books, 1 wishlist items.
+```
