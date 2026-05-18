@@ -1340,3 +1340,4 @@ const LibraryView = (() => {
 
     return { renderShelf, renderWishlist, renderUnified, renderCollection, showDetail, updateBookStatus, updateBookShelves };
 })();
+
