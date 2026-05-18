@@ -54,11 +54,11 @@
     --space-2xl: 48px;
     --space-3xl: 72px;
 
-    /* — Radii — */
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 20px;
-    --radius-xl: 28px;
+    /* — Radii (Apple Squircle look) — */
+    --radius-sm: 10px;
+    --radius-md: 16px;
+    --radius-lg: 24px;
+    --radius-xl: 32px;
     --radius-full: 9999px;
 
     /* — Shadows — */

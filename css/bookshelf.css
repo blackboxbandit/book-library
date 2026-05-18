@@ -16,7 +16,7 @@
         var(--shelf-wood),
         var(--shelf-wood-dark)
     ) 1;
-    box-shadow: 
+    box-shadow:
         inset 0 16px 32px rgba(0, 0, 0, 0.8),
         inset 0 0 16px rgba(0, 0, 0, 0.6),
         0 12px 32px rgba(0,0,0,0.5);
@@ -273,7 +273,7 @@
     padding: 8px 32px;
     background: linear-gradient(to bottom, #d4af37, #aa7c11, #f9e596, #aa7c11);
     border-radius: 2px;
-    box-shadow: 
+    box-shadow:
         0 4px 10px rgba(0, 0, 0, 0.8),
         inset 0 1px 1px rgba(255, 255, 255, 0.8),
         inset 0 -1px 2px rgba(0, 0, 0, 0.5),
