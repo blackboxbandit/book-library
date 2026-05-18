@@ -31,11 +31,8 @@ const Utils = (() => {
             t = subtitleMatch[1];
         }
 
-        // Handle 'The', 'A', 'An' at the end (e.g. "Martian, The")
-        t = t.replace(/,\s*(the|a|an)\s*$/i, '');
-
-        // Remove leading 'The', 'A', 'An'
-        t = t.replace(/^(the|a|an)\s+/i, '');
+        // Remove 'the', 'a', 'an' anywhere in the title to improve matching
+        t = t.replace(/\b(the|a|an)\b/g, '');
 
         // Remove all non-alphanumeric characters
         t = t.replace(/[^a-z0-9]/g, '');
@@ -188,12 +185,36 @@ const Utils = (() => {
     async function fetchCoverByISBN(isbn) {
         if (!isbn) return null;
         const cleanISBN = isbn.replace(/[^0-9X]/gi, '');
-        const url = `https://covers.openlibrary.org/b/isbn/${cleanISBN}-L.jpg?default=false`;
+        let coverUrl = `https://covers.openlibrary.org/b/isbn/${cleanISBN}-L.jpg?default=false`;
         try {
-            const resp = await fetch(url);
-            if (!resp.ok) return null;
-            const blob = await resp.blob();
-            if (blob.size < 1000) return null; // too small = placeholder
+            let resp = await fetch(coverUrl);
+            let blob = resp.ok ? await resp.blob() : null;
+
+            // If the OpenLibrary cover is too small (placeholder) or not found, try Google Books API
+            if (!blob || blob.size < 1000) {
+                const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=isbn:${cleanISBN}`;
+                const gbResp = await fetch(gbUrl);
+                if (gbResp.ok) {
+                    const gbData = await gbResp.json();
+                    if (gbData.items && gbData.items.length > 0) {
+                        const item = gbData.items[0];
+                        if (item.volumeInfo && item.volumeInfo.imageLinks) {
+                            const imgUrl = item.volumeInfo.imageLinks.thumbnail || item.volumeInfo.imageLinks.smallThumbnail;
+                            if (imgUrl) {
+                                // Google Books urls are often http, upgrade to https
+                                const secureImgUrl = imgUrl.replace('http:', 'https:');
+                                const imgResp = await fetch(secureImgUrl);
+                                if (imgResp.ok) {
+                                    blob = await imgResp.blob();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (!blob || blob.size < 500) return null; // Still too small or failed
+
             const rawDataURL = await new Promise(resolve => {
                 const reader = new FileReader();
                 reader.onload = () => resolve(reader.result);
@@ -430,6 +451,35 @@ const Utils = (() => {
     }
 
     /**
+     * Suggest covers by querying Google Books API.
+     * Returns an array of image URLs.
+     */
+    async function suggestCovers(query) {
+        if (!query || !query.trim()) return [];
+        try {
+            const gbUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query.trim())}&maxResults=5`;
+            const resp = await fetch(gbUrl);
+            if (!resp.ok) return [];
+            const data = await resp.json();
+            if (!data.items) return [];
+
+            const covers = [];
+            for (const item of data.items) {
+                if (item.volumeInfo && item.volumeInfo.imageLinks) {
+                    const imgUrl = item.volumeInfo.imageLinks.thumbnail || item.volumeInfo.imageLinks.smallThumbnail;
+                    if (imgUrl) {
+                        covers.push(imgUrl.replace('http:', 'https:'));
+                    }
+                }
+            }
+            // Return unique URLs
+            return [...new Set(covers)];
+        } catch {
+            return [];
+        }
+    }
+
+    /**
      * Search books by a freeform query (title, author, or both).
      * Returns an array of up to 5 results.
      */
@@ -558,7 +608,7 @@ const Utils = (() => {
         readFileAsArrayBuffer, readFileAsText, readFileAsDataURL,
         compressImage, compressDataURL, fetchCoverByISBN, fetchCoverFromUrl,
         parseOPF, stripHTML, formatDate,
-        lookupByISBN, searchBooks,
+        lookupByISBN, searchBooks, suggestCovers,
         getOxfamSearchUrl, lookupOxfamPrice,
         escapeHtml, sanitizeString, isValidUrl, sanitizeImportedObject
     };

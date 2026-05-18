@@ -1,9 +1,72 @@
 /* ===== Physical Books Management ===== */
 const PhysicalBooks = (() => {
+    // State
+    let _fetchedCover = null; // Holds a cover fetched from lookup
+
     function init() {
         document.getElementById('btn-add-physical').addEventListener('click', () => {
             openForm();
         });
+
+        // Wire up cover suggestions
+        const suggestBtn = document.getElementById('btn-suggest-cover');
+        if (suggestBtn) {
+            suggestBtn.addEventListener('click', handleSuggestCover);
+        }
+    }
+
+    async function handleSuggestCover() {
+        const title = document.getElementById('form-title').value;
+        if (!title) {
+            Utils.toast('Please enter a title to search for covers', 'error');
+            return;
+        }
+
+        const btn = document.getElementById('btn-suggest-cover');
+        const container = document.getElementById('cover-suggestions');
+
+        btn.disabled = true;
+        btn.textContent = 'Searching...';
+        container.innerHTML = '';
+
+        try {
+            const covers = await Utils.suggestCovers(title);
+            if (covers && covers.length > 0) {
+                covers.forEach(url => {
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.style.height = '120px';
+                    img.style.cursor = 'pointer';
+                    img.style.borderRadius = '4px';
+                    img.style.border = '2px solid transparent';
+
+                    img.addEventListener('click', async () => {
+                        // Deselect others
+                        Array.from(container.children).forEach(c => c.style.borderColor = 'transparent');
+                        img.style.borderColor = 'var(--accent)';
+
+                        Utils.toast('Fetching cover...', 'info');
+                        const coverData = await Utils.fetchCoverFromUrl(url);
+                        if (coverData) {
+                            _fetchedCover = coverData;
+                            Utils.toast('Cover selected', 'success');
+                        } else {
+                            Utils.toast('Failed to load cover', 'error');
+                        }
+                    });
+
+                    container.appendChild(img);
+                });
+            } else {
+                container.textContent = 'No covers found.';
+            }
+        } catch (e) {
+            console.error(e);
+            container.textContent = 'Error fetching covers.';
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Suggest Cover';
+        }
     }
 
     function openForm(book = null) {
@@ -22,6 +85,10 @@ const PhysicalBooks = (() => {
             lookupResults.innerHTML = '';
             lookupResults.hidden = true;
         }
+        _fetchedCover = null;
+
+        const container = document.getElementById('cover-suggestions');
+        if (container) container.innerHTML = '';
 
         if (book) {
             document.getElementById('form-book-id').value = book.id;
@@ -44,7 +111,7 @@ const PhysicalBooks = (() => {
         }
 
         // Clear any previously fetched cover
-        let _fetchedCover = null;
+        _fetchedCover = null;
 
         overlay.classList.add('open');
     }
@@ -272,5 +339,9 @@ const PhysicalBooks = (() => {
         return true;
     }
 
-    return { init, openForm, saveBook, deleteBook, updateStarDisplay, lookupBook };
+    function getFetchedCover() {
+        return _fetchedCover;
+    }
+
+    return { init, openForm, saveBook, deleteBook, updateStarDisplay, lookupBook, getFetchedCover };
 })();

@@ -2,7 +2,9 @@
 
 .book-card {
     position: relative;
-    width: var(--book-width);
+    width: 100%;
+    max-width: 200px;
+    aspect-ratio: 2 / 3;
     cursor: pointer;
     transition: transform var(--duration-normal) var(--ease-out);
     animation: cardIn 0.4s var(--ease-out) both;
@@ -27,7 +29,8 @@
 .book-cover-wrap {
     position: relative;
     width: 100%;
-    height: var(--book-height);
+    aspect-ratio: 148 / 220;
+    height: auto;
     border-radius: var(--radius-md);
     overflow: hidden;
     box-shadow: var(--shadow-card);

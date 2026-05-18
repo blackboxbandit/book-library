@@ -334,6 +334,18 @@ const LibraryView = (() => {
             return t;
         };
 
+        const getOverlapRatio = (norm1, norm2) => {
+            const words1 = norm1.split(/\s+/).filter(w => w.length > 0);
+            const words2 = norm2.split(/\s+/).filter(w => w.length > 0);
+            if (words1.length === 0 || words2.length === 0) return 0;
+            const set2 = new Set(words2);
+            let matchCount = 0;
+            for (const w of words1) {
+                if (set2.has(w)) matchCount++;
+            }
+            return matchCount / Math.min(words1.length, words2.length);
+        };
+
         for (let i = 0; i < entries.length; i++) {
             const [keyA, entryA] = entries[i];
             if (!merged.has(keyA)) continue; // already merged away
@@ -348,10 +360,12 @@ const LibraryView = (() => {
                 const normB = normTitle(entryB);
                 if (normB.length < 4) continue;
 
-                // Check if one title contains the other
+                // Check if one title contains the other, or if they have high word overlap
                 const aContainsB = normA.includes(normB);
                 const bContainsA = normB.includes(normA);
-                if (!aContainsB && !bContainsA) continue;
+                const overlapRatio = getOverlapRatio(normA, normB);
+
+                if (!aContainsB && !bContainsA && overlapRatio < 0.7) continue;
 
                 // Also check author overlap — at least one author word must match
                 const authorWordsA = (entryA.author || '').toLowerCase().split(/\s+/).filter(w => w.length > 2);

@@ -9,7 +9,7 @@
 /* --- Grid Layout (replaces shelf rows) --- */
 .shelf-row {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(var(--book-width), 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
     gap: var(--space-xl) var(--space-lg);
     justify-items: center;
     padding: var(--space-md) 0;
@@ -103,24 +103,7 @@
     }
 
     .shelf-row {
-        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
         gap: var(--space-md);
-    }
-
-    :root {
-        --book-width: 110px;
-        --book-height: 165px;
-    }
-}
-
-@media (max-width: 480px) {
-    .shelf-row {
-        grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-    }
-
-    :root {
-        --book-width: 90px;
-        --book-height: 135px;
     }
 }
 

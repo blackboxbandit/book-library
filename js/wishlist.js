@@ -27,6 +27,9 @@ const Wishlist = (() => {
         typeEl.value = 'wishlist';
         wishlistFields.hidden = false;
 
+        const container = document.getElementById('cover-suggestions');
+        if (container) container.innerHTML = '';
+
         if (item) {
             document.getElementById('form-book-id').value = item.id;
             document.getElementById('form-title').value = item.title || '';
@@ -65,6 +68,9 @@ const Wishlist = (() => {
             coverId = 'cover_' + id;
             const dataURL = await Utils.compressImage(coverInput.files[0]);
             if (dataURL) await DB.saveCover(coverId, dataURL);
+        } else if (typeof PhysicalBooks !== 'undefined' && PhysicalBooks.getFetchedCover && PhysicalBooks.getFetchedCover()) {
+            coverId = 'cover_' + id;
+            await DB.saveCover(coverId, PhysicalBooks.getFetchedCover());
         } else if (existingItem) {
             coverId = existingItem.coverId;
         }
