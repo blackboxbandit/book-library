@@ -5,6 +5,9 @@ const App = (() => {
     function init() {
         // Init DB first
         DB.open().then(async () => {
+            // Init theme toggle
+            ThemeToggle.init();
+
             // Init all modules
             EbookScanner.init();
             AudiobookScanner.init();

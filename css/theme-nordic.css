@@ -1,0 +1,192 @@
+/* ===== Nordic Glass Theme ===== */
+html[data-theme="nordic"] *,html[data-theme="nordic"] *::before,html[data-theme="nordic"] *::after{transition:background-color .4s ease,color .3s ease,border-color .3s ease,box-shadow .3s ease}
+
+html[data-theme="nordic"]{
+--bg-primary:#ece7df;--bg-secondary:rgba(255,255,255,0.35);--bg-tertiary:rgba(255,255,255,0.28);
+--bg-elevated:rgba(255,255,255,0.42);--bg-hover:rgba(255,255,255,0.18);--bg-modal:rgba(200,195,186,0.55);
+--accent:#2d5a27;--accent-hover:#3a7232;--accent-subtle:rgba(45,90,39,0.10);--accent-muted:rgba(45,90,39,0.05);
+--text-primary:#1a1a1a;--text-secondary:#6b6560;--text-tertiary:#9e9790;--text-inverse:#f5f2ed;
+--format-ebook:#3d6ea5;--format-ebook-bg:rgba(61,110,165,0.10);--format-audiobook:#7c5ba0;
+--format-audiobook-bg:rgba(124,91,160,0.10);--format-physical:#2d5a27;--format-physical-bg:rgba(45,90,39,0.10);
+--format-sale:#c0392b;--glass-bg:rgba(255,255,255,0.22);--glass-border:rgba(255,255,255,0.45);
+--glass-highlight:rgba(255,255,255,0.8);--glass-blur:32px;--separator:rgba(0,0,0,0.07);
+--shadow-sm:0 1px 3px rgba(0,0,0,0.06);--shadow-md:0 4px 16px rgba(0,0,0,0.08);
+--shadow-lg:0 12px 40px rgba(0,0,0,0.10);--shadow-card:0 2px 8px rgba(0,0,0,0.05);
+--shadow-card-hover:0 8px 28px rgba(0,0,0,0.10);
+--shelf-wood:transparent;--shelf-wood-light:transparent;--shelf-wood-dark:transparent;
+--shelf-shadow:transparent;--shelf-highlight:transparent;--shelf-ambient:transparent;--shelf-grain:transparent;
+--radius-sm:12px;--radius-md:18px;--radius-lg:24px;--radius-xl:28px}
+
+/* Body — rich gradient visible through glass */
+html[data-theme="nordic"] body{
+background:radial-gradient(ellipse at 20% 20%,rgba(163,190,160,0.35) 0%,transparent 50%),
+radial-gradient(ellipse at 80% 80%,rgba(180,165,200,0.25) 0%,transparent 50%),
+radial-gradient(ellipse at 50% 50%,rgba(200,180,140,0.2) 0%,transparent 60%),
+linear-gradient(165deg,#e8e2d8 0%,#d9d1c4 35%,#cfc5b6 65%,#ddd5c8 100%);
+color:var(--text-primary);min-height:100vh}
+
+/* Header — frosted glass with reflection */
+html[data-theme="nordic"] #app-header{background:rgba(255,255,255,0.28);backdrop-filter:saturate(160%) blur(28px);-webkit-backdrop-filter:saturate(160%) blur(28px);border-bottom:1px solid rgba(255,255,255,0.5);box-shadow:0 1px 0 rgba(255,255,255,0.6) inset,0 4px 16px rgba(0,0,0,0.04)}
+html[data-theme="nordic"] .logo-icon{color:var(--accent)}
+html[data-theme="nordic"] .logo h1{color:var(--text-primary);font-weight:400;letter-spacing:0.02em}
+
+/* Tabs */
+html[data-theme="nordic"] .tab-btn{color:var(--text-tertiary);border-radius:var(--radius-sm)}
+html[data-theme="nordic"] .tab-btn:hover{color:var(--text-secondary);background:rgba(255,255,255,0.15)}
+html[data-theme="nordic"] .tab-btn.active{color:var(--text-primary);background:rgba(255,255,255,0.35);box-shadow:0 1px 0 rgba(255,255,255,0.6) inset,0 2px 6px rgba(0,0,0,0.04);border:1px solid rgba(255,255,255,0.4)}
+
+/* Section Headers */
+html[data-theme="nordic"] .section-header h2{background:none;-webkit-background-clip:unset;-webkit-text-fill-color:var(--text-primary);background-clip:unset;font-weight:300;letter-spacing:0.01em;color:var(--text-primary)}
+
+/* Selects */
+html[data-theme="nordic"] .filter-group select,html[data-theme="nordic"] select{background-color:rgba(255,255,255,0.25);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b6560' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;border:1px solid rgba(255,255,255,0.4);color:var(--text-primary);box-shadow:0 1px 0 rgba(255,255,255,0.5) inset;backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+html[data-theme="nordic"] .filter-group select:focus,html[data-theme="nordic"] select:focus{border-color:var(--accent);background-color:rgba(255,255,255,0.4);box-shadow:0 0 0 2px rgba(45,90,39,0.12)}
+html[data-theme="nordic"] .filter-group select:hover,html[data-theme="nordic"] select:hover{border-color:rgba(255,255,255,0.6);background-color:rgba(255,255,255,0.35)}
+
+/* Search */
+html[data-theme="nordic"] .search-box{background:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.45);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);box-shadow:0 1px 0 rgba(255,255,255,0.5) inset}
+html[data-theme="nordic"] .search-box:focus-within{border-color:var(--accent);background:rgba(255,255,255,0.4);box-shadow:0 0 0 2px rgba(45,90,39,0.1),0 1px 0 rgba(255,255,255,0.5) inset}
+html[data-theme="nordic"] .search-box input{color:var(--text-primary)}
+html[data-theme="nordic"] .search-box input::placeholder{color:var(--text-tertiary)}
+
+/* Buttons */
+html[data-theme="nordic"] .btn{border-radius:20px}
+html[data-theme="nordic"] .btn-primary{background:var(--accent);color:#fff}
+html[data-theme="nordic"] .btn-primary:hover{background:var(--accent-hover)}
+html[data-theme="nordic"] .btn-secondary{background:rgba(255,255,255,0.25);color:var(--text-secondary);border:1px solid rgba(255,255,255,0.45);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);box-shadow:0 1px 0 rgba(255,255,255,0.5) inset}
+html[data-theme="nordic"] .btn-secondary:hover{background:rgba(255,255,255,0.4);color:var(--text-primary);box-shadow:0 1px 0 rgba(255,255,255,0.6) inset,0 2px 8px rgba(0,0,0,0.04)}
+html[data-theme="nordic"] .btn-danger{background:rgba(192,57,43,0.08);color:var(--format-sale);border:1px solid rgba(192,57,43,0.12)}
+html[data-theme="nordic"] .btn-danger:hover{background:rgba(192,57,43,0.14)}
+
+/* ===== Bookshelf — Glass panel with reflection ===== */
+html[data-theme="nordic"] .bookshelf-container{background:rgba(255,255,255,0.15);backdrop-filter:blur(var(--glass-blur)) saturate(140%);-webkit-backdrop-filter:blur(var(--glass-blur)) saturate(140%);border:1px solid rgba(255,255,255,0.5);border-image:none;border-top-color:rgba(255,255,255,0.7);border-left-color:rgba(255,255,255,0.55);border-right-color:rgba(255,255,255,0.3);border-bottom-color:rgba(255,255,255,0.25);box-shadow:0 8px 32px rgba(0,0,0,0.08),0 1px 0 rgba(255,255,255,0.7) inset,0 -1px 0 rgba(0,0,0,0.03) inset,inset 0 0 80px rgba(255,255,255,0.1);border-radius:var(--radius-xl);margin:0 var(--space-xl) var(--space-xl);padding:var(--space-xl);position:relative;overflow:hidden}
+/* Glass reflection across top */
+html[data-theme="nordic"] .bookshelf-container::before{content:'';position:absolute;top:0;left:0;right:0;height:55%;background:linear-gradient(180deg,rgba(255,255,255,0.3) 0%,rgba(255,255,255,0.1) 25%,transparent 100%);pointer-events:none;border-radius:var(--radius-xl) var(--radius-xl) 0 0;z-index:0}
+
+/* Shelf rows — glass shelves */
+html[data-theme="nordic"] .shelf-row{padding-bottom:var(--space-lg);margin-bottom:var(--space-md);position:relative}
+html[data-theme="nordic"] .shelf-row::after{display:block !important;content:'';position:absolute;bottom:0;left:-4px;right:-4px;height:3px;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.5) 15%,rgba(255,255,255,0.7) 50%,rgba(255,255,255,0.5) 85%,transparent 100%);border-radius:2px;box-shadow:0 1px 6px rgba(255,255,255,0.3),0 2px 8px rgba(0,0,0,0.04);z-index:var(--z-shelf)}
+html[data-theme="nordic"] .shelf-row::before{display:block !important;content:'';position:absolute;bottom:3px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent);z-index:calc(var(--z-shelf) + 1)}
+
+/* Shelf group headers */
+html[data-theme="nordic"] .shelf-group-header h3{font-family:var(--font-body);background:none;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.18em;font-size:var(--text-xs);font-weight:500;padding:var(--space-sm) 0;box-shadow:none;text-shadow:none;border-bottom:1px solid rgba(0,0,0,0.08);border-radius:0}
+html[data-theme="nordic"] .shelf-group-header h3::before,html[data-theme="nordic"] .shelf-group-header h3::after{display:none}
+
+/* Book cards — flat, soft */
+html[data-theme="nordic"] .book-card{filter:none;perspective:none}
+html[data-theme="nordic"] .book-card:hover{transform:translateY(-6px);filter:none}
+html[data-theme="nordic"] .book-card::after{display:none}
+html[data-theme="nordic"] .book-cover-wrap{border-radius:var(--radius-sm);box-shadow:0 2px 12px rgba(0,0,0,0.08);overflow:hidden;transform-style:flat}
+html[data-theme="nordic"] .book-card:hover .book-cover-wrap{transform:none;box-shadow:0 6px 24px rgba(0,0,0,0.12)}
+html[data-theme="nordic"] .book-cover-wrap::before{display:none}
+html[data-theme="nordic"] .book-cover-wrap::after{border-radius:var(--radius-sm);background:linear-gradient(135deg,rgba(255,255,255,0.2) 0%,transparent 40%)}
+html[data-theme="nordic"] .book-cover-img{border-radius:var(--radius-sm)}
+html[data-theme="nordic"] .book-card:hover .book-cover-img{transform:none}
+html[data-theme="nordic"] .book-overlay{border-radius:var(--radius-sm);background:linear-gradient(0deg,rgba(0,0,0,0.75) 0%,rgba(0,0,0,0.3) 40%,transparent 100%)}
+
+/* Placeholder covers */
+html[data-theme="nordic"] .book-cover-placeholder{background:linear-gradient(160deg,#d4cfc6 0%,#c5bfb4 50%,#b8b2a6 100%);border-radius:var(--radius-sm)}
+html[data-theme="nordic"] .book-cover-placeholder::before{background:rgba(0,0,0,0.06);box-shadow:0 calc(var(--book-height) - 28px) 0 rgba(0,0,0,0.06)}
+html[data-theme="nordic"] .book-cover-placeholder::after{background:linear-gradient(180deg,transparent 5%,rgba(0,0,0,0.05) 15%,rgba(0,0,0,0.05) 85%,transparent 95%)}
+html[data-theme="nordic"] .book-cover-placeholder .placeholder-title{color:#3a3530}
+html[data-theme="nordic"] .book-cover-placeholder .placeholder-author{color:#6b6560}
+html[data-theme="nordic"] .book-cover-placeholder .placeholder-icon{color:#8a847a}
+html[data-theme="nordic"] .book-cover-placeholder.audiobook-cover{background:linear-gradient(160deg,#d0c8d8 0%,#bfb4cc 50%,#b0a4bf 100%)}
+
+/* Format badges */
+html[data-theme="nordic"] .format-badge{backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,0.3);box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+html[data-theme="nordic"] .badge-ebook{background:rgba(61,110,165,0.18);color:var(--format-ebook)}
+html[data-theme="nordic"] .badge-audiobook{background:rgba(124,91,160,0.18);color:var(--format-audiobook)}
+html[data-theme="nordic"] .badge-physical{background:rgba(45,90,39,0.18);color:var(--format-physical)}
+
+/* Currently reading */
+html[data-theme="nordic"] .currently-reading-section{background:linear-gradient(135deg,rgba(45,90,39,0.06),rgba(124,91,160,0.04));border:1px solid rgba(255,255,255,0.4);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+
+/* ===== Modals — glass with scroll fix ===== */
+html[data-theme="nordic"] .modal-overlay{background:rgba(180,175,165,0.45);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+html[data-theme="nordic"] .modal{background:rgba(255,255,255,0.32);backdrop-filter:blur(40px) saturate(150%);-webkit-backdrop-filter:blur(40px) saturate(150%);border:1px solid rgba(255,255,255,0.55);border-top-color:rgba(255,255,255,0.75);box-shadow:0 24px 80px rgba(0,0,0,0.12),0 1px 0 rgba(255,255,255,0.8) inset,inset 0 0 40px rgba(255,255,255,0.1);position:relative}
+/* Modal scroll fix — ensure content scrolls properly */
+html[data-theme="nordic"] .modal-body{position:relative;z-index:1;overflow-y:auto;max-height:calc(90vh - 60px)}
+html[data-theme="nordic"] .modal-form{position:relative;z-index:1;overflow-y:auto}
+html[data-theme="nordic"] .modal-close{background:rgba(255,255,255,0.3);color:var(--text-secondary);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.4);z-index:10}
+html[data-theme="nordic"] .modal-close:hover{background:rgba(255,255,255,0.5);color:var(--text-primary)}
+html[data-theme="nordic"] .modal-info h2{color:var(--text-primary);background:none;-webkit-text-fill-color:var(--text-primary)}
+html[data-theme="nordic"] .modal-tags span{background:var(--accent-subtle);color:var(--accent)}
+html[data-theme="nordic"] .modal-description{color:var(--text-secondary)}
+html[data-theme="nordic"] .modal-meta{color:var(--text-tertiary)}
+
+/* Form inputs */
+html[data-theme="nordic"] .form-group input,html[data-theme="nordic"] .form-group textarea,html[data-theme="nordic"] .form-group select{background:rgba(255,255,255,0.35);border:1px solid rgba(255,255,255,0.4);color:var(--text-primary)}
+html[data-theme="nordic"] .form-group input:focus,html[data-theme="nordic"] .form-group textarea:focus{border-color:var(--accent);background:rgba(255,255,255,0.5)}
+html[data-theme="nordic"] .shelf-create-row input{background:rgba(255,255,255,0.35);border:1px solid rgba(255,255,255,0.4);color:var(--text-primary)}
+html[data-theme="nordic"] .shelf-create-row input:focus{border-color:var(--accent)}
+
+/* Modal enrichment */
+html[data-theme="nordic"] .modal-enrichment-section{background:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.35)}
+html[data-theme="nordic"] .modal-inline-input{background:rgba(255,255,255,0.35);border:1px solid rgba(255,255,255,0.4);color:var(--text-primary)}
+html[data-theme="nordic"] .modal-inline-input:focus{border-color:var(--accent)}
+html[data-theme="nordic"] .modal-inline-textarea{background:rgba(255,255,255,0.35);border:1px solid rgba(255,255,255,0.4);color:var(--text-primary)}
+html[data-theme="nordic"] .modal-inline-textarea:focus{border-color:var(--accent)}
+html[data-theme="nordic"] .modal-tag-chip{background:var(--accent-subtle);color:var(--accent)}
+
+/* Lookup */
+html[data-theme="nordic"] .lookup-results{background:rgba(255,255,255,0.3);border:1px solid rgba(255,255,255,0.4);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+html[data-theme="nordic"] .lookup-item:hover{background:rgba(255,255,255,0.15)}
+html[data-theme="nordic"] .lookup-thumb{background:rgba(0,0,0,0.04)}
+
+/* ===== Settings — glass cards with reflection ===== */
+html[data-theme="nordic"] .settings-card{background:rgba(255,255,255,0.18);backdrop-filter:blur(24px) saturate(140%);-webkit-backdrop-filter:blur(24px) saturate(140%);border:1px solid rgba(255,255,255,0.5);border-top-color:rgba(255,255,255,0.7);box-shadow:0 4px 20px rgba(0,0,0,0.05),0 1px 0 rgba(255,255,255,0.7) inset,inset 0 0 30px rgba(255,255,255,0.06);position:relative;overflow:hidden}
+html[data-theme="nordic"] .settings-card::before{content:'';position:absolute;top:0;left:0;right:0;height:45%;background:linear-gradient(180deg,rgba(255,255,255,0.2) 0%,transparent 100%);pointer-events:none;border-radius:var(--radius-lg) var(--radius-lg) 0 0;z-index:0}
+html[data-theme="nordic"] .settings-card>*{position:relative;z-index:1}
+html[data-theme="nordic"] .shelf-list-item{background:rgba(255,255,255,0.25);border:1px solid rgba(255,255,255,0.35)}
+html[data-theme="nordic"] .stat-value{color:var(--text-primary)}
+
+/* Toasts — glass */
+html[data-theme="nordic"] .toast{background:rgba(255,255,255,0.28);backdrop-filter:blur(28px) saturate(150%);-webkit-backdrop-filter:blur(28px) saturate(150%);border:1px solid rgba(255,255,255,0.55);border-top-color:rgba(255,255,255,0.7);box-shadow:0 8px 32px rgba(0,0,0,0.08),0 1px 0 rgba(255,255,255,0.7) inset;color:var(--text-primary)}
+html[data-theme="nordic"] .toast.toast-success{border-left:3px solid var(--accent)}
+html[data-theme="nordic"] .toast.toast-error{border-left:3px solid var(--format-sale)}
+html[data-theme="nordic"] .toast.toast-info{border-left:3px solid #3d6ea5}
+
+/* Wishlist — glass cards */
+html[data-theme="nordic"] .wishlist-card{background:rgba(255,255,255,0.18);backdrop-filter:blur(24px) saturate(140%);-webkit-backdrop-filter:blur(24px) saturate(140%);border:1px solid rgba(255,255,255,0.5);border-top-color:rgba(255,255,255,0.7);box-shadow:0 4px 16px rgba(0,0,0,0.05),0 1px 0 rgba(255,255,255,0.7) inset;position:relative;overflow:hidden}
+html[data-theme="nordic"] .wishlist-card::before{content:'';position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.18) 0%,transparent 100%);pointer-events:none;z-index:0}
+html[data-theme="nordic"] .wishlist-card>*{position:relative;z-index:1}
+html[data-theme="nordic"] .wishlist-card:hover{box-shadow:0 8px 32px rgba(0,0,0,0.08);border-color:rgba(255,255,255,0.6)}
+html[data-theme="nordic"] .wishlist-prices{border-top:1px solid rgba(0,0,0,0.06)}
+
+/* Misc */
+html[data-theme="nordic"] .sale-badge{background:rgba(192,57,43,0.85)}
+html[data-theme="nordic"] .progress-bar{background:rgba(0,0,0,0.06)}
+html[data-theme="nordic"] .progress-fill{background:var(--accent)}
+html[data-theme="nordic"] .help-modal-content code{background:var(--accent-subtle);color:var(--accent)}
+html[data-theme="nordic"] .help-modal-content .kbd{background:rgba(255,255,255,0.3);color:var(--text-primary);border:1px solid rgba(255,255,255,0.4);box-shadow:0 1px 0 rgba(0,0,0,0.06)}
+html[data-theme="nordic"] .help-modal-content .help-note{background:var(--accent-muted);border:1px solid rgba(45,90,39,0.10)}
+html[data-theme="nordic"] .star-rating .star{color:var(--text-tertiary)}
+html[data-theme="nordic"] .star-rating .star.active{color:#c8a94e}
+html[data-theme="nordic"] .modal-star.active{color:#c8a94e;text-shadow:0 0 8px rgba(200,169,78,0.3)}
+html[data-theme="nordic"] .badge-status-unread{background:rgba(255,255,255,0.2);color:var(--text-secondary)}
+html[data-theme="nordic"] .badge-status-reading{background:rgba(61,110,165,0.10);color:var(--format-ebook)}
+html[data-theme="nordic"] .badge-status-read{background:rgba(45,90,39,0.10);color:var(--accent)}
+html[data-theme="nordic"] .tick-complete-btn{background:var(--accent);box-shadow:0 2px 8px rgba(45,90,39,0.3)}
+html[data-theme="nordic"] .tick-complete-btn:hover{background:var(--accent-hover)}
+html[data-theme="nordic"] .modal-shelf-select{background-color:rgba(255,255,255,0.35);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b6560' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;border:1px solid rgba(255,255,255,0.4);color:var(--text-primary)}
+html[data-theme="nordic"] .modal-shelf-select:focus{border-color:var(--accent)}
+
+/* ===== Theme Toggle Button ===== */
+.theme-toggle-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;border:1px solid var(--glass-border);background:var(--bg-tertiary);color:var(--text-secondary);cursor:pointer;transition:all .2s ease;flex-shrink:0;margin-left:auto}
+.theme-toggle-btn:hover{background:var(--bg-hover);color:var(--text-primary);transform:scale(1.05)}
+.theme-toggle-btn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.theme-toggle-btn .icon-nordic{display:block}.theme-toggle-btn .icon-classic{display:none}
+.theme-toggle-btn.is-nordic .icon-nordic{display:none}.theme-toggle-btn.is-nordic .icon-classic{display:block}
+
+/* Theme Picker (Settings) */
+.theme-picker{display:flex;gap:var(--space-sm);margin-bottom:var(--space-md)}
+.theme-option{flex:1;padding:var(--space-md) var(--space-lg);border-radius:var(--radius-md);border:2px solid var(--glass-border);background:var(--bg-tertiary);color:var(--text-secondary);font-size:var(--text-sm);font-weight:var(--weight-medium);font-family:var(--font-body);cursor:pointer;transition:all .2s ease;text-align:center}
+.theme-option:hover{border-color:var(--text-tertiary);color:var(--text-primary)}
+.theme-option.active{border-color:var(--accent);background:var(--accent-subtle);color:var(--accent);font-weight:var(--weight-semibold)}
+
+/* Responsive */
+@media(max-width:768px){
+html[data-theme="nordic"] .bookshelf-container{margin:0 var(--space-md) var(--space-md);padding:var(--space-md);border-radius:var(--radius-lg)}
+html[data-theme="nordic"] .currently-reading-section{margin:0 var(--space-md)}
+}
