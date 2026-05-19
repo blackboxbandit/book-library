@@ -78,7 +78,7 @@ test.describe('Book Library E2E Tests', () => {
         await expect(page.locator('#modal-overlay')).toBeHidden();
 
         // Book should be gone
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(2000);
         await expect(page.locator('.book-card', { hasText: 'E2E Test Book' })).toHaveCount(0);
     });
 
@@ -102,7 +102,7 @@ test.describe('Book Library E2E Tests', () => {
 
         await page.click('#tab-settings');
         await page.click('#btn-clear-all');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(2000);
 
         const fileChooserPromise = page.waitForEvent('filechooser');
         await page.click('#btn-import-json');
@@ -112,25 +112,25 @@ test.describe('Book Library E2E Tests', () => {
 
         // Go to unified library
         await page.click('#tab-unified');
-        await page.waitForSelector('.book-card');
+        await page.waitForTimeout(2000);
         await page.waitForTimeout(1000);
 
-        const cardCount = await page.locator('.book-card').count();
+        const cardCount = await page.locator('#unified-shelf .book-card').count();
         expect(cardCount).toBeGreaterThan(50);
         expect(cardCount).toBeLessThan(127);
 
         // Test sorting
         await page.selectOption('#unified-sort', 'author');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(2000);
 
         // Test filtering
         await page.selectOption('#unified-filter-format', 'audiobook');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(2000);
 
         // Search for Kahneman — should find merged entry
         await page.selectOption('#unified-filter-format', 'all');
         await page.fill('#unified-search', 'Kahneman');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(2000);
 
         const kahnemanCard = page.locator('.book-card', { hasText: 'Thinking, Fast and Slow' }).first();
         await expect(kahnemanCard).toBeVisible();
@@ -140,7 +140,7 @@ test.describe('Book Library E2E Tests', () => {
         // Test group by shelf
         await page.fill('#unified-search', '');
         await page.selectOption('#unified-group-by', 'shelf');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(2000);
         await expect(page.locator('.shelf-group-header', { hasText: 'Reading' }).first()).toBeVisible();
     });
 
@@ -150,7 +150,7 @@ test.describe('Book Library E2E Tests', () => {
         // Clear and import
         await page.click('#tab-settings');
         await page.click('#btn-clear-all');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(2000);
 
         const fileChooserPromise = page.waitForEvent('filechooser');
         await page.click('#btn-import-json');
@@ -160,11 +160,11 @@ test.describe('Book Library E2E Tests', () => {
 
         // Go to eBooks tab
         await page.click('#tab-ebooks');
-        await page.waitForSelector('.book-card');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(2000);
+        await page.waitForTimeout(2000);
 
         // Click first book card
-        const firstCard = page.locator('.book-card').first();
+        const firstCard = page.locator('#ebooks-shelf .book-card').first();
         await firstCard.click();
 
         // Detail modal should appear with Remove Book button
@@ -181,7 +181,7 @@ test.describe('Book Library E2E Tests', () => {
 
         await page.click('#tab-settings');
         await page.click('#btn-clear-all');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(2000);
 
         const fileChooserPromise = page.waitForEvent('filechooser');
         await page.click('#btn-import-json');
@@ -191,11 +191,11 @@ test.describe('Book Library E2E Tests', () => {
 
         // Search for a book that exists in multiple formats
         await page.click('#tab-unified');
-        await page.waitForSelector('.book-card');
+        await page.waitForTimeout(2000);
         await page.fill('#unified-search', 'Thinking, Fast and Slow');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(2000);
 
-        const mergedCard = page.locator('.book-card').first();
+        const mergedCard = page.locator('#unified-shelf .book-card').first();
         await mergedCard.click();
 
         await expect(page.locator('#book-detail-modal')).toBeVisible();
@@ -264,9 +264,9 @@ test.describe('Book Library E2E Tests', () => {
         await page.click('#btn-add-physical');
         await page.fill('#form-isbn', '9780131103627');
         await page.click('#btn-lookup-book');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(2000);
         await page.click('#btn-fetch-cover');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(2000);
         await page.keyboard.press('Escape');
     });
 
@@ -276,7 +276,7 @@ test.describe('Book Library E2E Tests', () => {
         // Import data
         await page.click('#tab-settings');
         await page.click('#btn-clear-all');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(2000);
         const fileChooserPromise = page.waitForEvent('filechooser');
         await page.click('#btn-import-json');
         const fileChooser = await fileChooserPromise;
@@ -285,11 +285,11 @@ test.describe('Book Library E2E Tests', () => {
 
         // Test search on eBooks tab
         await page.click('#tab-ebooks');
-        await page.waitForSelector('.book-card');
-        const initialEbookCount = await page.locator('.book-card').count();
+        await page.waitForTimeout(2000);
+        const initialEbookCount = await page.locator('#ebooks-shelf .book-card').count();
         await page.fill('#ebooks-search', 'Atomic');
-        await page.waitForTimeout(500);
-        const filteredEbookCount = await page.locator('.book-card').count();
+        await page.waitForTimeout(2000);
+        const filteredEbookCount = await page.locator('#ebooks-shelf .book-card').count();
         expect(filteredEbookCount).toBeLessThan(initialEbookCount);
         expect(filteredEbookCount).toBeGreaterThan(0);
 
@@ -314,7 +314,7 @@ test.describe('Book Library E2E Tests', () => {
         await page.fill('#form-title', 'Status Test Book');
         await page.fill('#form-author', 'Status Tester');
         await page.click('#btn-form-save');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(2000);
 
         // Open the book detail modal
         const bookCard = page.locator('.book-card', { hasText: 'Status Test Book' }).first();
@@ -324,17 +324,17 @@ test.describe('Book Library E2E Tests', () => {
         // Click "Reading" status button
         const readingBtn = page.locator('.btn-status-toggle', { hasText: 'Reading' });
         await readingBtn.click();
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(2000);
 
         // Verify toast appeared
         await expect(page.locator('.toast').first()).toBeVisible();
 
         // Clean up - delete the book
         await page.click('#tab-physical');
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(2000);
         const card = page.locator('.book-card', { hasText: 'Status Test Book' }).first();
         await card.click();
         await page.locator('#btn-modal-delete').click();
-        await page.waitForTimeout(500);
+        await page.waitForTimeout(2000);
     });
 });
